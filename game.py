@@ -84,24 +84,58 @@ class Game:
         self.grid = Grid(width, height)
 
     def play(self):
-        if self.moveNow == 'user':
-            move = self.getMove()
-            self.makeMove(move)
-            self.moveNow == 'computer'
+        endOfGame = False
+        while not endOfGame:
+            if self.moveNow == 'user':
+                success = False
+                while not success:
+                    init, dest = self.getMove()
+                    success = self.makeMove(init, dest)
+                self.moveNow = 'computer'
+            else:
+                currentState = GameState(self.grid, None, 'computer', 1, float('-inf'))
+                bestValue, move = agent.minmax(currentState)
+                self.moveNow = 'user'
+            print grid
+            endOfGame = self.checkEndOfGame(int(self.moveNow==self.moveFirst))
+        if self.moveNow == 'computer':
+            print 'Congratulations! You win!'
         else:
-            currentState = GameState(self.grid, None, 'computer', 1, float('-inf'))
-            bestValue, move = agent.minmax(currentState)
-            self.moveNow = 'user'
-        self.checkEndOfGame()
+            print 'Oops... You lose.'
 
     def getMove(self):
-        initialPos = raw_input('Choose')
+        init = tuple(int(str.strip()) for str in raw_input('Choose your initial position: ').split(','))
+        while (len(init) != 2) or (init[0] not in range(1, self.grid.width+1)) or (init[1] not in range(1, self.grid.height+1)):
+            print 'Initial position is not valid.'
+            init = tuple(int(str.strip()) for str in raw_input('Choose your initial position: ').split(','))
+
+        dest = tuple(int(str.strip()) for str in raw_input('Choose your destination: ').split(','))
+        while (len(dest) != 2) or (dest[0] not in range(1, self.grid.width+1)) or (dest[1] not in range(1, self.grid.height+1)):
+            print 'Destination position is not valid.'
+            dest = tuple(int(str.strip()) for str in raw_input('Choose your destination: ').split(','))
+
+        return (init, dest)
 
     def makeMove(self, move):
         TODO
 
-    def checkEndOfGame(self):
-        TODO
+    def checkEndOfGame(self, symbolIndex):
+        checkSymbol = self.grid.REPRESENTATION[symbolIndex]
+        otherSymbol = self.grid.REPRESENTATION[1-symbolIndex]
+        emptySymbol = self.grid.REPRESENTATION[2]
+        for i in range(1, self.grid.width+1):
+            for j in range(1, self.grid.height+1):
+                if self.grid[i, j] != checkSymbol:
+                    continue
+                if (i > 2) and (self.grid[i-1, j] == otherSymbol) and (self.grid[i-2, j] == emptySymbol):
+                    return False
+                if (i < self.grid.width-1) and (self.grid[i+1, j] == otherSymbol) and (self.grid[i+2, j] == emptySymbol):
+                    return False
+                if (j > 2) and (self.grid[i, j-1] == otherSymbol) and (self.grid[i, j-2] == emptySymbol):
+                    return False
+                if (j < self.grid.height-1) and (self.grid[i, j+1] == otherSymbol) and (self.grid[i, j+2] == emptySymbol):
+                    return False
+        return True
 
 class GameState:
     """
