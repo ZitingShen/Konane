@@ -113,7 +113,7 @@ class Game:
             otherColor = "X"
         else:  # current block is empty
             return False
-        if self.grid[initialPosition] != colorNow: # current block is not the player's color
+        if self.grid[initialPosition] != colorNow:  # current block is not the player's color
             return False
 
         if initialPosition[0] == destinationPosition[0]:
@@ -161,9 +161,25 @@ class GameState:
     Store game state of Konone.
     """
 
-    def __init__(self, grid, move, player, level, bestValue):
+    def __init__(self, grid, move, player, level, bestValue, minMax):
         self.grid = grid.copy()
         self.move = move
         self.player = player
         self.level = level
         self.bestValue = bestValue
+        self.minMax = minMax
+
+    def copy(self):
+        new_grid = self.grid.deepCopy()
+        new_move = self.move
+        new_player = self.player
+        new_level = self.level
+        new_bestValue = self.bestValue
+        s = GameState(new_grid, new_move, new_player, new_level, new_bestValue)
+        return s
+
+    def deepCopy(self):
+        return self.copy()
+
+    def getSuccessors(selfs):
+        TODO
