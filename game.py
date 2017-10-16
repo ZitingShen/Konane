@@ -1,3 +1,4 @@
+import agent
 class Grid:
     """
     A 2-dimensional array which represents the board of Konone.
@@ -161,13 +162,13 @@ class GameState:
     Store game state of Konone.
     """
 
-    def __init__(self, grid, move, player, level, bestValue, minMax):
+    def __init__(self, grid, move, player, level, bestValue):
         self.grid = grid.copy()
         self.move = move
         self.player = player
         self.level = level
         self.bestValue = bestValue
-        self.minMax = minMax
+        self.minMax = "max" if self.player == "computer" else "min"
 
     def copy(self):
         new_grid = self.grid.deepCopy()
@@ -181,5 +182,5 @@ class GameState:
     def deepCopy(self):
         return self.copy()
 
-    def getSuccessors(selfs):
+    def getSuccessors(self):
         TODO
