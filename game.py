@@ -2,28 +2,29 @@ class Grid:
     """
     A 2-dimensional array which represents the board of Konone.
     """
+
     def __init__(self, width=8, height=8):
         self.REPRESENTATION = ['X', 'O', '.']
 
         self.width = width
         self.height = height
-        self.data = [[self.REPRESENTATION[(x+y)%2] for y in range(height)] for x in range(width)]
+        self.data = [[self.REPRESENTATION[(x + y) % 2] for y in range(height)] for x in range(width)]
 
     def __getitem__(self, index):
-        return self.data[index[0]-1][index[1]-1]
+        return self.data[index[0] - 1][index[1] - 1]
 
     def __setitem__(self, index, item):
         if item not in self.REPRESENTATION: raise Exception('Grids can only \'X\', \'O\' and \'.\'')
-        self.data[index[0]-1][index[1]-1] = item
+        self.data[index[0] - 1][index[1] - 1] = item
 
     def __str__(self):
         out = '   '
         for j in range(self.width):
-            out += str(j+1) + ' '
+            out += str(j + 1) + ' '
         out += '\n'
         for i in range(self.height):
             out += '\n'
-            out += str(i+1) + '  '
+            out += str(i + 1) + '  '
             for j in range(self.width):
                 out += self.data[i][j] + ' '
         return out
@@ -69,15 +70,17 @@ class Grid:
         list = []
         for x in range(self.width):
             for y in range(self.height):
-                list.append((x,y))
+                list.append((x, y))
         return list
+
 
 class Game:
     """
     Play the Konone game.
     """
+
     def __init__(self, moveFirst, width=8, height=8):
-        if moveFirst not in ['computer', 'user']: 
+        if moveFirst not in ['computer', 'user']:
             raise Exception('Either computer or user move first.')
         self.moveFirst = moveFirst
         self.moveNow = moveFirst
@@ -116,8 +119,57 @@ class Game:
 
         return (init, dest)
 
-    def makeMove(self, move):
-        TODO
+    def makeMove(self, initialPosition, destinationPosition, colorNow):
+        """
+        assume input tuples are in the range of board(checked in getMove():
+        :param initial_Position: a tuple of coordinate (x,y)
+        :param destination_Position: a tuple of coordinate (x,y)
+        :return: void or False
+        """
+        if colorNow == "X":
+            otherColor = "O"
+        elif colorNow == "O":
+            otherColor = "X"
+        else:  # current block is empty
+            return False
+        if self.grid[initialPosition] != colorNow: # current block is not the player's color
+            return False
+
+        if initialPosition[0] == destinationPosition[0]:
+            x = initialPosition[0]
+            y1 = min(initialPosition[1], destinationPosition[1])
+            y2 = max(initialPosition[1], destinationPosition[1])
+            # check legal move along the way
+            for i in range(y1, y2+1, 2):
+                if i == y2 and self.grid[(x, i)] != colorNow:
+                    return False
+                if i == y1 or i == y2:
+                    continue
+                if self.grid[(x, i)] != "." and self.grid[(x, i+1)] != otherColor:
+                    return False
+            # change the grid
+            self.grid[initialPosition], self.grid[destinationPosition] = ".", colorNow
+            for j in range(y1+1, y2, 2):
+                self.grid[(x, j)] = "."
+        elif initialPosition[1] == destinationPosition[1]:
+            y = initialPosition[1]
+            x1 = min(initialPosition[0], destinationPosition[0])
+            x2 = max(initialPosition[0], destinationPosition[0])
+            # check legal move along the way
+            for i in range(x1, x2+1, 2):
+                if i == x2 and self.grid[(i, y)] != ".":
+                    return False
+                if i == x1 or i == x2:
+                    continue
+                if self.grid[(i, y)] != "." and self.grid[(i+1, y)] != otherColor:
+                    return False
+            # change the grid
+            self.grid[initialPosition], self.grid[destinationPosition] = ".", colorNow
+            for j in range(x1+1, x2, 2):
+                self.grid[(j, y)] = "."
+        # it is trying to make turns
+        return False
+
 
     def checkEndOfGame(self, symbolIndex):
         checkSymbol = self.grid.REPRESENTATION[symbolIndex]
@@ -137,10 +189,12 @@ class Game:
                     return False
         return True
 
+
 class GameState:
     """
     Store game state of Konone.
     """
+
     def __init__(self, grid, move, player, level, bestValue):
         self.grid = grid.copy()
         self.move = move
