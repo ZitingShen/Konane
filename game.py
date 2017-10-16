@@ -11,11 +11,11 @@ class Grid:
         self.data = [[self.REPRESENTATION[(x + y) % 2] for y in range(height)] for x in range(width)]
 
     def __getitem__(self, index):
-        return self.data[index[0] - 1][index[1] - 1]
+        return self.data[index[1] - 1][index[0] - 1]
 
     def __setitem__(self, index, item):
         if item not in self.REPRESENTATION: raise Exception('Grids can only \'X\', \'O\' and \'.\'')
-        self.data[index[0] - 1][index[1] - 1] = item
+        self.data[index[1] - 1][index[0] - 1] = item
 
     def __str__(self):
         out = '   '
@@ -85,24 +85,42 @@ class Game:
         self.moveFirst = moveFirst
         self.moveNow = moveFirst
         self.grid = Grid(width, height)
+        self.round = 1
 
     def play(self):
         """
         Play the game.
         """
         endOfGame = False
+        firstMove = ()
         while not endOfGame:
-            if self.moveNow == 'user':
+            print self.grid
+            if self.round == 1:
+                firstMove = self.getFirstMove()
+                self.grid[firstMove] = self.grid.REPRESENTATION[2]
+                if self.moveNow == 'user':
+                    self.moveNow = 'computer'
+                else:
+                    self.moveNow = 'user'
+                self.round += 1
+            elif self.round == 2:
+                secondMove = self.getSecondMove(firstMove)
+                self.grid[secondMove] = self.grid.REPRESENTATION[2]
+                if self.moveNow == 'user':
+                    self.moveNow = 'computer'
+                else:
+                    self.moveNow = 'user'
+                self.round += 1
+            elif self.moveNow == 'user':
                 success = False
                 while not success:
                     init, dest = self.getMove()
-                    success = self.makeMove(init, dest, int(self.moveNow==self.moveFirst))
+                    success = self.makeMove(init, dest, 1-int(self.moveNow==self.moveFirst))
                 self.moveNow = 'computer'
             else:
                 currentState = GameState(self.grid, None, 'computer', 1, float('-inf'))
                 bestValue, move = agent.minmax(currentState)
                 self.moveNow = 'user'
-            print grid
             endOfGame = self.checkEndOfGame(int(self.moveNow==self.moveFirst))
         if self.moveNow == 'computer':
             print 'Congratulations! You win!'
@@ -112,18 +130,41 @@ class Game:
     def getMove(self):
         """
         Get the move of the user from keyboard.
+        :return: tuple of the initial and destination position
         """
-        init = tuple(int(str.strip()) for str in raw_input('Choose your initial position: ').split(','))
+        init = tuple(int(str.strip()) for str in raw_input('Choose the initial position of your move: ').split(','))
         while (len(init) != 2) or (init[0] not in range(1, self.grid.width+1)) or (init[1] not in range(1, self.grid.height+1)):
             print 'Initial position is not valid.'
-            init = tuple(int(str.strip()) for str in raw_input('Choose your initial position: ').split(','))
+            init = tuple(int(str.strip()) for str in raw_input('Choose the initial position of your move: ').split(','))
 
-        dest = tuple(int(str.strip()) for str in raw_input('Choose your destination: ').split(','))
+        dest = tuple(int(str.strip()) for str in raw_input('Choose the destination position of your move: ').split(','))
         while (len(dest) != 2) or (dest[0] not in range(1, self.grid.width+1)) or (dest[1] not in range(1, self.grid.height+1)):
             print 'Destination position is not valid.'
-            dest = tuple(int(str.strip()) for str in raw_input('Choose your destination: ').split(','))
+            dest = tuple(int(str.strip()) for str in raw_input('Choose the destination position of your move: ').split(','))
 
         return (init, dest)
+
+    def getFirstMove(self):
+        """
+        Get the first move of the user from keyboard.
+        :return: tuple of the piece position
+        """
+        move = tuple(int(str.strip()) for str in raw_input('Choose your first move: ').split(','))
+        while move not in [(1, 1), (4, 4), (5, 5), (8, 8)]:
+            print 'First move is not valid.'
+            move = tuple(int(str.strip()) for str in raw_input('Choose your first move: ').split(','))
+        return move
+
+    def getSecondMove(self, firstMove):
+        """
+        Get the second move of the user from keyboard.
+        :return: tuple of the piece position
+        """
+        move = tuple(int(str.strip()) for str in raw_input('Choose your second move: ').split(','))
+        while len(move) != 2 or abs(move[0]-firstMove[0]) + abs(move[1]-firstMove[1]) != 1:
+            print 'Second move is not valid.'
+            move = tuple(int(str.strip()) for str in raw_input('Choose your second move: ').split(','))
+        return move
 
     def makeMove(self, initialPosition, destinationPosition, colorIndex):
         """
@@ -137,8 +178,11 @@ class Game:
         checkColor = self.grid.REPRESENTATION[colorIndex]
         otherColor = self.grid.REPRESENTATION[1-colorIndex]
         emptyColor = self.grid.REPRESENTATION[2]
-        if self.grid[initialPosition] != checkColor:  # initial position does not have the correct color
+        if self.grid[initialPosition] != checkColor:
             print 'The piece you are trying to move is not yours! Please reselect your move.'
+            return False
+        if self.grid[destinationPosition] != emptyColor:
+            print 'The destination position of your move is not empty! Please reselect your move.'
             return False
         if initialPosition == destinationPosition:
             print 'The initial and destination position of your move are the same. Please reselect your move.'
@@ -152,7 +196,7 @@ class Game:
             if initialPosition[1] < destinationPosition[1]:
                 # check legal move along the way
                 for i in range(initialPosition[1]+1, destinationPosition[1], 2):
-                    if self.grid[(x, i)] != otherColor and self.grid[(x, i+1)] != emptyColor:
+                    if self.grid[(x, i)] != otherColor or self.grid[(x, i+1)] != emptyColor:
                         print 'Invalid move! Please reselect your move.'
                         return False
                 # change the grid
@@ -163,7 +207,7 @@ class Game:
             else:
                 # check legal move along the way
                 for i in range(initialPosition[1]-1, destinationPosition[1], -2):
-                    if self.grid[(x, i)] != otherColor and self.grid[(x, i-1)] != emptyColor:
+                    if self.grid[(x, i)] != otherColor or self.grid[(x, i-1)] != emptyColor:
                         print 'Invalid move! Please reselect your move.'
                         return False
                 # change the grid
@@ -173,13 +217,13 @@ class Game:
                 return True
         elif initialPosition[1] == destinationPosition[1]:
             y = initialPosition[1]
-            if (destinationPosition[0] - initialPosition[0]) %2 != 0:
+            if (destinationPosition[0] - initialPosition[0])%2 != 0:
                 print 'Invalid move! Please reselect your move.'
                 return False
             if initialPosition[0] < destinationPosition[0]:
                 # check legal move along the way
                 for i in range(initialPosition[0]+1, destinationPosition[0], 2):
-                    if self.grid[(i, y)] != otherColor and self.grid[(i+1, y)] != emptyColor:
+                    if self.grid[(i, y)] != otherColor or self.grid[(i+1, y)] != emptyColor:
                         print 'Invalid move! Please reselect your move.'
                         return False
                 # change the grid
@@ -190,7 +234,7 @@ class Game:
             else:
                 # check legal move along the way
                 for i in range(initialPosition[0]-1, destinationPosition[0], -2):
-                    if self.grid[(i, y)] != otherColor and self.grid[(i-1, y)] != emptyColor:
+                    if self.grid[(i, y)] != otherColor or self.grid[(i-1, y)] != emptyColor:
                         print 'Invalid move! Please reselect your move.'
                         return False
                 # change the grid
@@ -199,7 +243,7 @@ class Game:
                     self.grid[(i, y)] = emptyColor
                 return True
         # make turns
-        print 'Invalid move! Please reselect your move.'
+        print 'Making turns is invalid move! Please reselect your move.'
         return False
 
 
@@ -226,6 +270,8 @@ class Game:
                     return False
         return True
 
+game = Game('user', 4, 4)
+game.play()
 
 class GameState:
     """
