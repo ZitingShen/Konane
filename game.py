@@ -153,8 +153,8 @@ class Game:
                 # check legal move along the way
                 for i in range(initialPosition[1]+1, destinationPosition[1], 2):
                     if self.grid[(x, i)] != otherColor and self.grid[(x, i+1)] != emptyColor:
-                    print 'Invalid move! Please reselect your move.'
-                    return False
+                        print 'Invalid move! Please reselect your move.'
+                        return False
                 # change the grid
                 self.grid[initialPosition], self.grid[destinationPosition] = ".", checkColor
                 for i in range(initialPosition[1]+1, destinationPosition[1], 2):
@@ -164,8 +164,8 @@ class Game:
                 # check legal move along the way
                 for i in range(initialPosition[1]-1, destinationPosition[1], -2):
                     if self.grid[(x, i)] != otherColor and self.grid[(x, i-1)] != emptyColor:
-                    print 'Invalid move! Please reselect your move.'
-                    return False
+                        print 'Invalid move! Please reselect your move.'
+                        return False
                 # change the grid
                 self.grid[initialPosition], self.grid[destinationPosition] = ".", checkColor
                 for i in range(initialPosition[1]-1, destinationPosition[1], -2):
@@ -180,8 +180,8 @@ class Game:
                 # check legal move along the way
                 for i in range(initialPosition[0]+1, destinationPosition[0], 2):
                     if self.grid[(i, y)] != otherColor and self.grid[(i+1, y)] != emptyColor:
-                    print 'Invalid move! Please reselect your move.'
-                    return False
+                        print 'Invalid move! Please reselect your move.'
+                        return False
                 # change the grid
                 self.grid[initialPosition], self.grid[destinationPosition] = ".", checkColor
                 for i in range(initialPosition[0]+1, destinationPosition[0], 2):
@@ -191,8 +191,8 @@ class Game:
                 # check legal move along the way
                 for i in range(initialPosition[0]-1, destinationPosition[0], -2):
                     if self.grid[(i, y)] != otherColor and self.grid[(i-1, y)] != emptyColor:
-                    print 'Invalid move! Please reselect your move.'
-                    return False
+                        print 'Invalid move! Please reselect your move.'
+                        return False
                 # change the grid
                 self.grid[initialPosition], self.grid[destinationPosition] = ".", checkColor
                 for i in range(initialPosition[0]-1, destinationPosition[0], -2):
