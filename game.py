@@ -271,8 +271,9 @@ class Game:
                     return False
         return True
 
-game = Game('user', 4, 4)
-game.play()
+
+# game = Game('user', 4, 4)
+# game.play()
 
 class GameState:
     """
