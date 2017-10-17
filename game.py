@@ -309,15 +309,63 @@ class GameState:
     def deepCopy(self):
         return self.copy()
 
-    def evaluation(self, the_grid, player):
+    def evaluation(self, the_grid, colorOfComp):
         """
-        evaluation function
+        :param the_grid:
+        :param colorNow:
         :return:
         """
         # if player has no move, then player lost, -inf or inf depend on who the player is
         # if player has moves, use heuristics.
+        colorOfUser = "X" if colorOfComp == "O" else "X"
+        if getAvailableMoves(self, the_grid, "computer") == 0:
+            return float("-inf")
+        elif getAvailableMoves(self, the_grid, "user") == 0:
+            return float("inf")
+        else:
+            return self.getAvailableMoves(the_grid, colorOfComp) - self.getAvailableMoves(the_grid. colorOfUser)
 
-        TODO
+    def getAvailableMoves(self, the_grid, colorNow):
+        """
+        :param the_grid:
+        :param player:
+        :return: integer value of available moves for color
+        """
+        result = 0
+        otherColor = "X" if colorNow == "O" else "X"
+        emptyColor = "."
+        for x in range(1, 9):
+            for y in range(1, 9):
+                if the_grid[x, y] == colorNow:
+                    copy_x = x
+                    while copy_x >= 3:
+                        if the_grid[(copy_x - 1, y)] == otherColor and self.grid[(copy_x - 2, y)] == emptyColor:
+                            result += 1
+                            copy_x -= 2
+                        else:
+                            break
+                    copy_x = x
+                    while copy_x <= 6:
+                        if the_grid[(copy_x + 1, y)] == otherColor and self.grid[(copy_x + 2, y)] == emptyColor:
+                            result += 1
+                            copy_x += 2
+                        else:
+                            break
+                    copy_y = y
+                    while copy_y >= 3:
+                        if the_grid[(x, copy_y - 1)] == otherColor and self.grid[(x, copy_y - 2)] == emptyColor:
+                            result += 1
+                            copy_x -= 2
+                        else:
+                            break
+                    copy_y = y
+                    while copy_y <= 6:
+                        if the_grid[(x, copy_y + 1)] == otherColor and self.grid[(x, copy_y + 2)] == emptyColor:
+                            result += 1
+                            copy_x += 2
+                        else:
+                            break
+        return result
 
     def getSuccessors(self):
         listOfSuccessors = []
@@ -327,6 +375,7 @@ class GameState:
         playerNow = self.player
         otherPlayer = "computer" if playerNow == "user" else "user"
         nextLevel = self.level + 1
+        colorOfComp = colorNow if playerNow == "computer" else otherColor
         for x in range(1, 9):
             for y in range(1, 9):
                 if self.grid[x, y] == colorNow:
@@ -339,11 +388,12 @@ class GameState:
                             new_grid[(copy_x-1), y] = emptyColor
                             new_grid[(copy_x-2), y] = colorNow
                             successor = GameState(new_grid, ((x, y), (copy_x-2, y)), otherPlayer, nextLevel,
-                                                  self.evaluation(new_grid), otherColor)
+                                                  self.evaluation(new_grid, colorOfComp), otherColor)
                             listOfSuccessors.append(successor)
                             copy_x -= 2
                         else:
                             break
+                    copy_x = x
                     while copy_x+2 <= 6:
                         if self.grid[(copy_x, y)] == colorNow and self.grid[(copy_x+1, y)] == otherColor \
                                 and self.grid[(copy_x+2, y)] == emptyColor:
@@ -352,7 +402,7 @@ class GameState:
                             new_grid[(copy_x+1), y] = emptyColor
                             new_grid[(copy_x+2), y] = colorNow
                             successor = GameState(new_grid, ((x, y), (copy_x+2, y)), otherPlayer, nextLevel,
-                                                  self.evaluation(new_grid), otherColor)
+                                                  self.evaluation(new_grid, colorOfComp), otherColor)
                             listOfSuccessors.append(successor)
                             copy_x += 2
                         else:
@@ -366,11 +416,12 @@ class GameState:
                             new_grid[(x, copy_y-1)] = emptyColor
                             new_grid[(x, copy_y-2)] = colorNow
                             successor = GameState(new_grid, ((x, y), (x, copy_y-2)), otherPlayer, nextLevel,
-                                                  self.evaluation(new_grid), otherColor)
+                                                  self.evaluation(new_grid, colorOfComp), otherColor)
                             listOfSuccessors.append(successor)
                             copy_y -= 2
                         else:
                             break
+                    copy_y = y
                     while copy_y <= 6:
                         if self.grid[(x, copy_y)] == colorNow and self.grid[(x,copy_y+1)] == otherColor \
                                 and self.grid[(x, copy_y+2)] == emptyColor:
@@ -379,7 +430,7 @@ class GameState:
                             new_grid[(x, copy_y+1)] = emptyColor
                             new_grid[(x, copy_y+2)] = colorNow
                             successor = GameState(new_grid, ((x, y), (x, copy_y+2)), otherPlayer, nextLevel,
-                                                  self.evaluation(new_grid), otherColor)
+                                                  self.evaluation(new_grid, colorOfComp), otherColor)
                             listOfSuccessors.append(successor)
                             copy_y += 2
                         else:
