@@ -11,20 +11,20 @@ class Grid:
         self.data = [[self.REPRESENTATION[(x + y) % 2] for y in range(height)] for x in range(width)]
 
     def __getitem__(self, index):
-        return self.data[index[1] - 1][index[0] - 1]
+        return self.data[index[0] - 1][index[1] - 1]
 
     def __setitem__(self, index, item):
         if item not in self.REPRESENTATION: raise Exception('Grids can only \'X\', \'O\' and \'.\'')
-        self.data[index[1] - 1][index[0] - 1] = item
+        self.data[index[0] - 1][index[1] - 1] = item
 
     def __str__(self):
-        out = '   '
+        out = '    '
         for j in range(self.width):
             out += str(j + 1) + ' '
         out += '\n'
         for i in range(self.height):
             out += '\n'
-            out += str(i + 1) + '  '
+            out += str(i + 1) + '   '
             for j in range(self.width):
                 out += self.data[i][j] + ' '
         return out
@@ -95,32 +95,30 @@ class Game:
         firstMove = ()
         while not endOfGame:
             print self.grid
-            if self.round == 1:
-                firstMove = self.getFirstMove()
-                self.grid[firstMove] = self.grid.REPRESENTATION[2]
-                if self.moveNow == 'user':
-                    self.moveNow = 'computer'
-                else:
-                    self.moveNow = 'user'
-                self.round += 1
-            elif self.round == 2:
-                secondMove = self.getSecondMove(firstMove)
-                self.grid[secondMove] = self.grid.REPRESENTATION[2]
-                if self.moveNow == 'user':
-                    self.moveNow = 'computer'
-                else:
-                    self.moveNow = 'user'
-                self.round += 1
-            elif self.moveNow == 'user':
+            if self.moveNow == 'user':
+                if self.round == 1:
+                    firstMove = self.getFirstMove()
+                    self.grid[firstMove] = self.grid.REPRESENTATION[2]
+                    continue
+                if self.round == 2:
+                    secondMove = self.getSecondMove(firstMove)
+                    self.grid[secondMove] = self.grid.REPRESENTATION[2]
+                    continue
                 success = False
                 while not success:
                     init, dest = self.getMove()
                     success = self.makeMove(init, dest, 1-int(self.moveNow==self.moveFirst))
+                
                 self.moveNow = 'computer'
             else:
+                if self.round == 1:
+                    pass
+                if self.round == 2:
+                    pass
                 currentState = GameState(self.grid, None, 'computer', 1, float('-inf'))
                 bestValue, move = agent.minmax(currentState)
                 self.moveNow = 'user'
+            self.round += 1
             endOfGame = self.checkEndOfGame(int(self.moveNow==self.moveFirst))
         if self.moveNow == 'computer':
             print 'Congratulations! You win!'
@@ -269,9 +267,6 @@ class Game:
                 if (j < self.grid.height-1) and (self.grid[i, j+1] == otherColor) and (self.grid[i, j+2] == emptyColor):
                     return False
         return True
-
-game = Game('user', 4, 4)
-game.play()
 
 class GameState:
     """
