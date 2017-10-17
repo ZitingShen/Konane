@@ -1,3 +1,5 @@
+from agent import minmaxNaive
+
 class Grid:
     """
     A 2-dimensional array which represents the board of Konone.
@@ -87,7 +89,7 @@ class Game:
         self.grid = Grid(width, height)
         self.round = 1
 
-    def play(self):
+    def play(self, minmaxDepth):
         """
         Play the game.
         """
@@ -99,24 +101,37 @@ class Game:
                 if self.round == 1:
                     firstMove = self.getFirstMove()
                     self.grid[firstMove] = self.grid.REPRESENTATION[2]
-                    continue
-                if self.round == 2:
+                elif self.round == 2:
                     secondMove = self.getSecondMove(firstMove)
                     self.grid[secondMove] = self.grid.REPRESENTATION[2]
-                    continue
-                success = False
-                while not success:
-                    init, dest = self.getMove()
-                    success = self.makeMove(init, dest, 1-int(self.moveNow==self.moveFirst))
-                
+                else:
+                    success = False
+                    while not success:
+                        init, dest = self.getMove()
+                        success = self.checkLegalMove(init, dest, int(self.moveNow!=self.moveFirst))
+                    self.makeMove(init, dest, int(self.moveNow!=self.moveFirst))
                 self.moveNow = 'computer'
             else:
                 if self.round == 1:
-                    pass
-                if self.round == 2:
-                    pass
-                currentState = GameState(self.grid, None, 'computer', 1, float('-inf'))
-                bestValue, move = agent.minmax(currentState)
+                    #currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))
+                    #bestValue, firstMove = minmaxNaive(currentState, minmaxDepth)
+                    firstMove = self.getFirstMove()
+
+                    self.grid[firstMove] = self.grid.REPRESENTATION[2]
+                    print 'Computer removed piece at', firstMove, '.'
+
+                elif self.round == 2:
+                    #currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))
+                    #bestValue, secondMove = minmaxNaive(currentState, minmaxDepth)
+                    secondMove = self.getSecondMove(firstMove)
+
+                    self.grid[secondMove] = self.grid.REPRESENTATION[2]
+                    print 'Computer removed piece at', secondMove, '.'
+                else:
+                    currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))
+                    bestValue, move = minmaxNaive(currentState, minmaxDepth)
+                    self.makeMove(move[0], move[1], int(self.moveNow!=self.moveFirst))
+                    print 'Computer moved piece at', move[0], 'to', move[1], '.'
                 self.moveNow = 'user'
             self.round += 1
             endOfGame = self.checkEndOfGame(int(self.moveNow==self.moveFirst))
@@ -164,14 +179,13 @@ class Game:
             move = tuple(int(str.strip()) for str in raw_input('Choose your second move: ').split(','))
         return move
 
-    def makeMove(self, initialPosition, destinationPosition, colorIndex):
+    def checkLegalMove(self, initialPosition, destinationPosition, colorIndex):
         """
-        Make move given by getMove().Assume input tuples are in the range of 
-        board(checked in getMove().
+        Check if the move is legal. Assume initial and destination positions are in the range of board.
         :param initialPosition: a tuple of coordinate (x,y)
         :param destinationPosition: a tuple of coordinate (x,y)
-        :param colorIndex: the index of the color being moved now
-        :return: True or False
+        :param colorIndex: the index of the color being moved now in Grid.REPRESENTATION
+        :return: True if the move is legal, False if it is not
         """
         checkColor = self.grid.REPRESENTATION[colorIndex]
         otherColor = self.grid.REPRESENTATION[1-colorIndex]
@@ -192,26 +206,16 @@ class Game:
                 print 'Invalid move! Please reselect your move.'
                 return False
             if initialPosition[1] < destinationPosition[1]:
-                # check legal move along the way
                 for i in range(initialPosition[1]+1, destinationPosition[1], 2):
                     if self.grid[(x, i)] != otherColor or self.grid[(x, i+1)] != emptyColor:
                         print 'Invalid move! Please reselect your move.'
                         return False
-                # change the grid
-                self.grid[initialPosition], self.grid[destinationPosition] = ".", checkColor
-                for i in range(initialPosition[1]+1, destinationPosition[1], 2):
-                    self.grid[(x, i)] = emptyColor
                 return True
             else:
-                # check legal move along the way
                 for i in range(initialPosition[1]-1, destinationPosition[1], -2):
                     if self.grid[(x, i)] != otherColor or self.grid[(x, i-1)] != emptyColor:
                         print 'Invalid move! Please reselect your move.'
                         return False
-                # change the grid
-                self.grid[initialPosition], self.grid[destinationPosition] = ".", checkColor
-                for i in range(initialPosition[1]-1, destinationPosition[1], -2):
-                    self.grid[(x, i)] = emptyColor
                 return True
         elif initialPosition[1] == destinationPosition[1]:
             y = initialPosition[1]
@@ -219,36 +223,57 @@ class Game:
                 print 'Invalid move! Please reselect your move.'
                 return False
             if initialPosition[0] < destinationPosition[0]:
-                # check legal move along the way
                 for i in range(initialPosition[0]+1, destinationPosition[0], 2):
                     if self.grid[(i, y)] != otherColor or self.grid[(i+1, y)] != emptyColor:
                         print 'Invalid move! Please reselect your move.'
                         return False
-                # change the grid
-                self.grid[initialPosition], self.grid[destinationPosition] = ".", checkColor
-                for i in range(initialPosition[0]+1, destinationPosition[0], 2):
-                    self.grid[(i, y)] = emptyColor
                 return True
             else:
-                # check legal move along the way
                 for i in range(initialPosition[0]-1, destinationPosition[0], -2):
                     if self.grid[(i, y)] != otherColor or self.grid[(i-1, y)] != emptyColor:
                         print 'Invalid move! Please reselect your move.'
                         return False
-                # change the grid
-                self.grid[initialPosition], self.grid[destinationPosition] = ".", checkColor
-                for i in range(initialPosition[0]-1, destinationPosition[0], -2):
-                    self.grid[(i, y)] = emptyColor
                 return True
         # make turns
         print 'Making turns is invalid move! Please reselect your move.'
         return False
 
+    def makeMove(self, initialPosition, destinationPosition, colorIndex):
+        """
+        Make move by changing the grid.
+        :param initialPosition: a tuple of coordinate (x,y)
+        :param destinationPosition: a tuple of coordinate (x,y)
+        :param colorIndex: the index of the color being moved now in Grid.REPRESENTATION
+        :return: void
+        """
+        checkColor = self.grid.REPRESENTATION[colorIndex]
+        otherColor = self.grid.REPRESENTATION[1-colorIndex]
+        emptyColor = self.grid.REPRESENTATION[2]
+
+        self.grid[initialPosition], self.grid[destinationPosition] = ".", checkColor
+
+        if initialPosition[0] == destinationPosition[0]:
+            x = initialPosition[0]
+            if initialPosition[1] < destinationPosition[1]:
+                for i in range(initialPosition[1]+1, destinationPosition[1], 2):
+                    self.grid[(x, i)] = emptyColor
+            else:
+                for i in range(initialPosition[1]-1, destinationPosition[1], -2):
+                    self.grid[(x, i)] = emptyColor
+        else:
+            y = initialPosition[1]
+            if initialPosition[0] < destinationPosition[0]:
+                for i in range(initialPosition[0]+1, destinationPosition[0], 2):
+                    self.grid[(i, y)] = emptyColor
+            else:
+                for i in range(initialPosition[0]-1, destinationPosition[0], -2):
+                    self.grid[(i, y)] = emptyColor
+
 
     def checkEndOfGame(self, colorIndex):
         """
         Check if it's the end of game.
-        :param colorIndex: the index of the color being moved now
+        :param colorIndex: the index of the color being moved now in Grid.REPRESENTATION
         :return: True or False
         """
         checkColor = self.grid.REPRESENTATION[colorIndex]
@@ -268,30 +293,172 @@ class Game:
                     return False
         return True
 
+
 class GameState:
     """
     Store game state of Konone.
     """
 
-    def __init__(self, grid, move, player, level, bestValue, minMax):
+    def __init__(self, grid, move, player, colorIndex, bestValue=None):
+        """
+        :param grid: the current game board.
+        :param move: a tupe of the initial and destination positions of the move
+        :param player: the current player
+        :param bestValue: the best evaluation value of levels below
+        :param colorIndex: the piece color of the current player
+        """
         self.grid = grid.copy()
         self.move = move
         self.player = player
-        self.level = level
-        self.bestValue = bestValue
-        self.minMax = minMax
+        self.minMax = 'max' if self.player == 'computer' else 'min'
+        self.colorIndex = colorIndex
+        self.bestValue = self.evaluate() if bestValue == None else bestValue
 
     def copy(self):
-        new_grid = self.grid.deepCopy()
-        new_move = self.move
-        new_player = self.player
-        new_level = self.level
-        new_bestValue = self.bestValue
-        s = GameState(new_grid, new_move, new_player, new_level, new_bestValue)
-        return s
+        return GameState(self.grid.deepCopy(), self.move, self.player, self.colorIndex, self.bestValue)
 
     def deepCopy(self):
         return self.copy()
 
-    def getSuccessors(selfs):
-        TODO
+    def evaluate(self):
+        """
+        Calculate the evaluation score for current state.
+        :param grid: the current game board
+        :return: the evaluation value of the grid for checkColor
+        """
+        # if player has no move, then player lost, -inf or inf depend on who the player is
+        # if player has moves, use heuristics.
+        checkColorMoves = self.getAvailableMoves(self.colorIndex)
+        otherColorMoves = self.getAvailableMoves(1-self.colorIndex)
+
+        if self.player == 'computer':
+            if checkColorMoves == 0:
+                return float("-inf")
+            else:
+                return checkColorMoves - otherColorMoves
+        else:
+            if checkColorMoves == 0:
+                return float("inf")
+            else:
+                return otherColorMoves - checkColorMoves
+
+    def getAvailableMoves(self, checkColorIndex):
+        """
+        Calculate the number of potential moves of a player. Moves that lie on the same direction
+        are not repeatedly counted. Instead, the longer the player can move in one direction, the 
+        higher score that direction will receive.
+        :param grid: the current game board
+        :param checkColorIndex: the index of color of the player being checked
+        :return: integer value of available moves for color
+        """
+        checkColor = self.grid.REPRESENTATION[checkColorIndex]
+        otherColor = self.grid.REPRESENTATION[1-checkColorIndex]
+        emptyColor = self.grid.REPRESENTATION[2]
+
+        result = 0
+        for x in range(1, self.grid.width+1):
+            for y in range(1, self.grid.height+1):
+                if self.grid[x, y] != checkColor:
+                    continue
+
+                copy_x = x - 2
+                while copy_x >= 1 and self.grid[copy_x+1, y] == otherColor \
+                        and self.grid[copy_x, y] == emptyColor:
+                    result += 1
+                    copy_x -= 2
+                
+                copy_x = x + 2
+                while copy_x <= self.grid.width \
+                        and self.grid[copy_x-1, y] == otherColor \
+                        and self.grid[copy_x, y] == emptyColor:
+                    result += 1
+                    copy_x += 2
+
+                copy_y = y - 2
+                while copy_y >= 1 and self.grid[x, copy_y+1] == otherColor \
+                        and self.grid[x, copy_y] == emptyColor:
+                    result += 1
+                    copy_y -= 2
+
+                copy_y = y + 2
+                while copy_y <= self.grid.height \
+                        and self.grid[x, copy_y-1] == otherColor \
+                        and self.grid[x, copy_y] == emptyColor:
+                    result += 1
+                    copy_y += 2
+        return result
+
+    def getSuccessors(self):
+        checkColor = self.grid.REPRESENTATION[self.colorIndex]
+        otherColor = self.grid.REPRESENTATION[1-self.colorIndex]
+        emptyColor = self.grid.REPRESENTATION[2]
+
+        listOfSuccessors = []
+        otherPlayer = 'user' if self.player == 'computer' else 'user'
+
+        for x in range(1, self.grid.width+1):
+            for y in range(1, self.grid.height+1):
+                if self.grid[x, y] != checkColor:
+                    continue
+
+                new_grid = self.grid.copy()
+                copy_x = x - 2
+                while copy_x >= 1 \
+                        and self.grid[copy_x+1, y] == otherColor \
+                        and self.grid[copy_x, y] == emptyColor:
+                    new_grid = new_grid.copy()
+                    new_grid[copy_x+2, y] = emptyColor
+                    new_grid[copy_x+1, y] = emptyColor
+                    new_grid[copy_x, y] = checkColor
+                    successor = GameState(new_grid, ((x, y), (copy_x, y)), 
+                        otherPlayer, 1-self.colorIndex)
+                    listOfSuccessors.append(successor)
+                    copy_x -= 2
+
+                new_grid = self.grid.copy()
+                copy_x = x + 2
+                while copy_x <= self.grid.width \
+                        and self.grid[copy_x-1, y] == otherColor \
+                        and self.grid[copy_x, y] == emptyColor:
+                    new_grid = new_grid.copy()
+                    new_grid[copy_x-2, y] = emptyColor
+                    new_grid[copy_x-1, y] = emptyColor
+                    new_grid[copy_x, y] = checkColor
+                    successor = GameState(new_grid, ((x, y), (copy_x, y)), 
+                        otherPlayer, 1-self.colorIndex)
+                    listOfSuccessors.append(successor)
+                    copy_x += 2
+
+                new_grid = self.grid.copy()
+                copy_y = y - 2
+                while copy_y >= 1 \
+                        and self.grid[x, copy_y+1] == otherColor \
+                        and self.grid[x, copy_y] == emptyColor:
+                    new_grid = new_grid.copy()
+                    new_grid[x, copy_y+2] = emptyColor
+                    new_grid[x, copy_y+1] = emptyColor
+                    new_grid[x, copy_y] = checkColor
+                    successor = GameState(new_grid, ((x, y), (x, copy_y)), 
+                        otherPlayer, 1-self.colorIndex)
+                    listOfSuccessors.append(successor)
+                    copy_y -= 2
+
+                new_grid = self.grid.copy()
+                copy_y = y + 2
+                while copy_y <= self.grid.height \
+                        and self.grid[x, copy_y-1] == otherColor \
+                        and self.grid[x, copy_y] == emptyColor:
+                    new_grid = new_grid.copy()
+                    new_grid[x, copy_y-2] = emptyColor
+                    new_grid[x, copy_y-1] = emptyColor
+                    new_grid[x, copy_y] = checkColor
+                    successor = GameState(new_grid, ((x, y), (x, copy_y)), 
+                        otherPlayer, 1-self.colorIndex)
+                    listOfSuccessors.append(successor)
+                    copy_y += 2
+
+        return listOfSuccessors
+
+
+game = Game('user')
+game.play(4)
