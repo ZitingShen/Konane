@@ -1,3 +1,5 @@
+import random
+
 def minimaxNaive(state, limit, round):
     """
     Naive Minmax algorithm
@@ -24,6 +26,8 @@ def minimaxNaive(state, limit, round):
             if bv > cbv:
                 cbv = bv
                 bestMove = successor.move
+        if listOfSuccessor and bestMove == None:
+            bestMove = random.choice(listOfSuccessor).move
         return cbv, bestMove
     else:
         cbv = float("inf")
@@ -33,6 +37,8 @@ def minimaxNaive(state, limit, round):
             if bv < cbv:
                 cbv = bv
                 bestMove = successor.move
+        if listOfSuccessor and bestMove == None:
+            bestMove = random.choice(listOfSuccessor).move
         return cbv, bestMove
 
 
@@ -66,6 +72,8 @@ def minimaxAlphaBeta(state, limit, round, alpha, beta):
                 alpha = bv
             if beta <= alpha:
                 break
+        if listOfSuccessor and bestMove == None:
+            bestMove = random.choice(listOfSuccessor).move
         return cbv, bestMove
     else:
         cbv = float("inf")
@@ -78,4 +86,6 @@ def minimaxAlphaBeta(state, limit, round, alpha, beta):
                 beta = bv
             if beta <= alpha:
                 break
+        if listOfSuccessor and bestMove == None:
+            bestMove = random.choice(listOfSuccessor).move
         return cbv, bestMove

@@ -114,22 +114,21 @@ class Game:
                 self.moveNow = 'computer'
             else:
                 if round == 1:
-                    currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))
+                    currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))     
                     bestValue, firstMove = minimaxNaive(currentState, minimaxDepth, round)
-
+                    #bestValue, firstMove = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
                     self.grid[firstMove] = self.grid.REPRESENTATION[2]
                     print 'Computer removed piece at', firstMove, '.'
-
                 elif round == 2:
                     currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))
-                    bestValue, secondMove = minimaxNaive(currentState, minimaxDepth)
-
+                    bestValue, secondMove = minimaxNaive(currentState, minimaxDepth, round)
+                    #bestValue, secondMove = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
                     self.grid[secondMove] = self.grid.REPRESENTATION[2]
                     print 'Computer removed piece at', secondMove, '.'
                 else:
                     currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))
-                    #bestValue, move = minimaxNaive(currentState, minimaxDepth, round)
-                    bestValue, move = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                    bestValue, move = minimaxNaive(currentState, minimaxDepth, round)
+                    #bestValue, move = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
                     self.makeMove(move[0], move[1], int(self.moveNow!=self.moveFirst))
                     print 'Computer moved piece at', move[0], 'to', move[1], '.'
                 self.moveNow = 'user'
@@ -336,13 +335,17 @@ class GameState:
         otherColorMoves = self.getAvailableMoves(1-self.colorIndex)
 
         if self.player == 'computer':
-            if checkColorMoves == 0:
-                return float("-inf")
+            if checkColorMoves == 0: #computer doesn't have moves
+                return float('-inf')
+            elif otherColorMoves == 0: #user doesn't have moves
+                return float('inf')
             else:
                 return checkColorMoves - otherColorMoves
         else:
-            if checkColorMoves == 0:
-                return float("inf")
+            if checkColorMoves == 0: #user doesn't have moves
+                return float('inf')
+            elif otherColorMoves == 0: #computer doesn't have moves
+                return float('-inf')
             else:
                 return otherColorMoves - checkColorMoves
 
@@ -420,16 +423,16 @@ class GameState:
                     continue
 
                 if x-1 >= 1 and self.grid[x-1, y] == emptyColor:
-                    listOfMoves.append((x-1, y))
+                    listOfMoves.append((x, y))
 
                 if x+1 <= self.grid.width and self.grid[x+1, y] == emptyColor:
-                    listOfMoves.append((x+1, y))
+                    listOfMoves.append((x, y))
 
                 if y-1 >= 1 and self.grid[x, y-1] == emptyColor:
-                    listOfMoves.append((x, y-1))
+                    listOfMoves.append((x, y))
 
                 if y+1 <= self.grid.height and self.grid[x, y+1] == emptyColor:
-                    listOfMoves.append((x, y+1))
+                    listOfMoves.append((x, y))
 
         for move in listOfMoves:
             new_grid = self.grid.copy()
@@ -510,5 +513,5 @@ class GameState:
         return listOfSuccessors
 
 
-game = Game('computer')
+game = Game('user')
 game.play(4)
