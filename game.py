@@ -513,5 +513,5 @@ class GameState:
         return listOfSuccessors
 
 
-game = Game('user')
+game = Game('computer', 4, 4)
 game.play(4)
