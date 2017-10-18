@@ -1,5 +1,5 @@
-from agent import minmaxNaive
-from agent import minmaxAlphaBeta
+from agent import minimaxNaive
+from agent import minimaxAlphaBeta
 
 class Grid:
     """
@@ -89,7 +89,7 @@ class Game:
         self.moveNow = moveFirst
         self.grid = Grid(width, height)
 
-    def play(self, minmaxDepth):
+    def play(self, minimaxDepth):
         """
         Play the game.
         """
@@ -115,21 +115,21 @@ class Game:
             else:
                 if round == 1:
                     currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))
-                    bestValue, firstMove = minmaxNaive(currentState, minmaxDepth, round)
+                    bestValue, firstMove = minimaxNaive(currentState, minimaxDepth, round)
 
                     self.grid[firstMove] = self.grid.REPRESENTATION[2]
                     print 'Computer removed piece at', firstMove, '.'
 
                 elif round == 2:
                     currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))
-                    bestValue, secondMove = minmaxNaive(currentState, minmaxDepth)
+                    bestValue, secondMove = minimaxNaive(currentState, minimaxDepth)
 
                     self.grid[secondMove] = self.grid.REPRESENTATION[2]
                     print 'Computer removed piece at', secondMove, '.'
                 else:
                     currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))
-                    #bestValue, move = minmaxNaive(currentState, minmaxDepth, round)
-                    bestValue, move = minmaxAlphaBeta(currentState, minmaxDepth, round, float('-inf'), float('inf'))
+                    #bestValue, move = minimaxNaive(currentState, minimaxDepth, round)
+                    bestValue, move = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
                     self.makeMove(move[0], move[1], int(self.moveNow!=self.moveFirst))
                     print 'Computer moved piece at', move[0], 'to', move[1], '.'
                 self.moveNow = 'user'

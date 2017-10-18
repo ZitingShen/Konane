@@ -1,4 +1,4 @@
-def minmaxNaive(state, limit, round):
+def minimaxNaive(state, limit, round):
     """
     Naive Minmax algorithm
     :param state: current state of game, class GameState
@@ -20,7 +20,7 @@ def minmaxNaive(state, limit, round):
         cbv = float("-inf")
         bestMove = None
         for successor in listOfSuccessor:
-            bv, move = minmaxNaive(successor, limit-1, round+1)
+            bv, move = minimaxNaive(successor, limit-1, round+1)
             if bv > cbv:
                 cbv = bv
                 bestMove = successor.move
@@ -29,14 +29,14 @@ def minmaxNaive(state, limit, round):
         cbv = float("inf")
         bestMove = None
         for successor in listOfSuccessor:
-            bv, move = minmaxNaive(successor, limit-1, round+1)
+            bv, move = minimaxNaive(successor, limit-1, round+1)
             if bv < cbv:
                 cbv = bv
                 bestMove = successor.move
         return cbv, bestMove
 
 
-def minmaxAlphaBeta(state, limit, round, alpha, beta):
+def minimaxAlphaBeta(state, limit, round, alpha, beta):
     """
     Minmax algorithm with Alpha-Beta pruning.
     :param state:
@@ -59,7 +59,7 @@ def minmaxAlphaBeta(state, limit, round, alpha, beta):
         cbv = float("-inf")
         bestMove = None
         for successor in listOfSuccessor:
-            bv, move = minmaxAlphaBeta(successor, limit-1, round+1, alpha, beta)
+            bv, move = minimaxAlphaBeta(successor, limit-1, round+1, alpha, beta)
             if bv > cbv:
                 cbv = bv
                 bestMove = successor.move
@@ -71,7 +71,7 @@ def minmaxAlphaBeta(state, limit, round, alpha, beta):
         cbv = float("inf")
         bestMove = None
         for successor in listOfSuccessor:
-            bv, move = minmaxAlphaBeta(successor, limit-1, round+1, alpha, beta)
+            bv, move = minimaxAlphaBeta(successor, limit-1, round+1, alpha, beta)
             if bv < cbv:
                 cbv = bv
                 bestMove = successor.move
