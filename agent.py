@@ -1,19 +1,26 @@
-def minmaxNaive(state, limit):
+def minmaxNaive(state, limit, round):
     """
     Naive Minmax algorithm
     :param state: current state of game, class GameState
     :param limit: an integer that indicates limit
     :return: cbv, best move
     """
-    currentState = state.deepCopy()
     if limit == 0:
-        return currentState.bestValue, currentState.move
-    listOfSuccessor = currentState.getSuccessors()
-    if currentState.minMax == 'max':
+        return state.bestValue, state.move
+
+    listOfSuccessor = []
+    if round == 1:
+        listOfSuccessor = state.getFirstMove()
+    elif round == 2:
+        listOfSuccessor = state.getSecondMove()
+    else:
+        listOfSuccessor = state.getSuccessors()
+
+    if state.minMax == 'max':
         cbv = float("-inf")
         bestMove = None
         for successor in listOfSuccessor:
-            bv, move = minmaxNaive(successor, limit-1)
+            bv, move = minmaxNaive(successor, limit-1, round+1)
             if bv > cbv:
                 cbv = bv
                 bestMove = successor.move
@@ -22,33 +29,41 @@ def minmaxNaive(state, limit):
         cbv = float("inf")
         bestMove = None
         for successor in listOfSuccessor:
-            bv, move = minmaxNaive(successor, limit-1)
+            bv, move = minmaxNaive(successor, limit-1, round+1)
             if bv < cbv:
                 cbv = bv
                 bestMove = successor.move
         return cbv, bestMove
 
 
-def minmaxAlphaBeta(state, limit, alpha, beta):
+def minmaxAlphaBeta(state, limit, round, alpha, beta):
     """
     Minmax algorithm with Alpha-Beta pruning.
     :param state:
-    :param limit:
+    :param alpha:
+    :param beta:
     :return:
     """
-    currentState = state.deepCopy()
-    if currentState.level == limit:
-        return currentState.bestValue, currentState.move
-    listOfSuccessor = currentState.getSuccessors()
-    if currentState.minMax == "max":
+    if limit == 0:
+        return state.bestValue, state.move
+
+    listOfSuccessor = []
+    if round == 1:
+        listOfSuccessor = state.getFirstMove()
+    elif round == 2:
+        listOfSuccessor = state.getSecondMove()
+    else:
+        listOfSuccessor = state.getSuccessors()
+
+    if state.minMax == 'max':
         cbv = float("-inf")
         bestMove = None
         for successor in listOfSuccessor:
-            bv, move = minmaxAlphaBeta(successor, limit+1)
+            bv, move = minmaxAlphaBeta(successor, limit-1, round+1, alpha, beta)
             if bv > cbv:
                 cbv = bv
                 bestMove = successor.move
-            alpha = max(alpha, cbv)
+                alpha = bv
             if beta <= alpha:
                 break
         return cbv, bestMove
@@ -56,11 +71,11 @@ def minmaxAlphaBeta(state, limit, alpha, beta):
         cbv = float("inf")
         bestMove = None
         for successor in listOfSuccessor:
-            bv, move = minmaxAlphaBeta(successor, limit+1)
+            bv, move = minmaxAlphaBeta(successor, limit-1, round+1, alpha, beta)
             if bv < cbv:
                 cbv = bv
                 bestMove = successor.move
-            beta = min(beta, cbv)
+                beta = bv
             if beta <= alpha:
                 break
         return cbv, bestMove

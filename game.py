@@ -1,4 +1,5 @@
 from agent import minmaxNaive
+from agent import minmaxAlphaBeta
 
 class Grid:
     """
@@ -60,13 +61,13 @@ class Grid:
         return g
 
     def countPlayerX(self):
-        return sum([x.count(REPRESENTATION[0]) for x in self.data])
+        return sum([x.count(self.REPRESENTATION[0]) for x in self.data])
 
     def countPlayerO(self):
-        return sum([x.count(REPRESENTATION[1]) for x in self.data])
+        return sum([x.count(self.REPRESENTATION[1]) for x in self.data])
 
     def countEmptySpace(self):
-        return sum([x.count(REPRESENTATION[2]) for x in self.data])
+        return sum([x.count(self.REPRESENTATION[2]) for x in self.data])
 
     def asList(self):
         list = []
@@ -87,21 +88,21 @@ class Game:
         self.moveFirst = moveFirst
         self.moveNow = moveFirst
         self.grid = Grid(width, height)
-        self.round = 1
 
     def play(self, minmaxDepth):
         """
         Play the game.
         """
+        round = 1
         endOfGame = False
         firstMove = ()
         while not endOfGame:
             print self.grid
             if self.moveNow == 'user':
-                if self.round == 1:
+                if round == 1:
                     firstMove = self.getFirstMove()
                     self.grid[firstMove] = self.grid.REPRESENTATION[2]
-                elif self.round == 2:
+                elif round == 2:
                     secondMove = self.getSecondMove(firstMove)
                     self.grid[secondMove] = self.grid.REPRESENTATION[2]
                 else:
@@ -112,29 +113,31 @@ class Game:
                     self.makeMove(init, dest, int(self.moveNow!=self.moveFirst))
                 self.moveNow = 'computer'
             else:
-                if self.round == 1:
-                    #currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))
-                    #bestValue, firstMove = minmaxNaive(currentState, minmaxDepth)
-                    firstMove = self.getFirstMove()
+                if round == 1:
+                    currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))
+                    bestValue, firstMove = minmaxNaive(currentState, minmaxDepth, round)
 
                     self.grid[firstMove] = self.grid.REPRESENTATION[2]
                     print 'Computer removed piece at', firstMove, '.'
 
-                elif self.round == 2:
-                    #currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))
-                    #bestValue, secondMove = minmaxNaive(currentState, minmaxDepth)
-                    secondMove = self.getSecondMove(firstMove)
+                elif round == 2:
+                    currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))
+                    bestValue, secondMove = minmaxNaive(currentState, minmaxDepth)
 
                     self.grid[secondMove] = self.grid.REPRESENTATION[2]
                     print 'Computer removed piece at', secondMove, '.'
                 else:
                     currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))
-                    bestValue, move = minmaxNaive(currentState, minmaxDepth)
+                    #bestValue, move = minmaxNaive(currentState, minmaxDepth, round)
+                    bestValue, move = minmaxAlphaBeta(currentState, minmaxDepth, round, float('-inf'), float('inf'))
                     self.makeMove(move[0], move[1], int(self.moveNow!=self.moveFirst))
                     print 'Computer moved piece at', move[0], 'to', move[1], '.'
                 self.moveNow = 'user'
-            self.round += 1
-            endOfGame = self.checkEndOfGame(int(self.moveNow==self.moveFirst))
+            if round > 2:
+                endOfGame = self.checkEndOfGame(int(self.moveNow!=self.moveFirst))
+            round += 1
+
+        print self.grid
         if self.moveNow == 'computer':
             print 'Congratulations! You win!'
         else:
@@ -163,7 +166,8 @@ class Game:
         :return: tuple of the piece position
         """
         move = tuple(int(str.strip()) for str in raw_input('Choose your first move: ').split(','))
-        while move not in [(1, 1), (4, 4), (5, 5), (8, 8)]:
+        while move not in [(1, 1), (self.grid.width/2, self.grid.height/2), \
+                (self.grid.width/2+1, self.grid.height/2+1), (self.grid.width, self.grid.height)]:
             print 'First move is not valid.'
             move = tuple(int(str.strip()) for str in raw_input('Choose your first move: ').split(','))
         return move
@@ -388,6 +392,52 @@ class GameState:
                     copy_y += 2
         return result
 
+    def getFirstMove(self):
+        emptyColor = self.grid.REPRESENTATION[2]
+        listOfSuccessors = []
+        otherPlayer = 'user' if self.player == 'computer' else 'user'
+
+        for (x, y) in [(1, 1), (self.grid.width/2, self.grid.height/2), \
+                (self.grid.width/2+1, self.grid.height/2+1), (self.grid.width, self.grid.height)]:
+            new_grid = self.grid.copy()
+            new_grid[x, y] = emptyColor
+            successor = GameState(new_grid, (x, y), otherPlayer, 1-self.colorIndex)
+            listOfSuccessors.append(successor)
+        return listOfSuccessors
+
+    def getSecondMove(self):
+        checkColor = self.grid.REPRESENTATION[self.colorIndex]
+        otherColor = self.grid.REPRESENTATION[1-self.colorIndex]
+        emptyColor = self.grid.REPRESENTATION[2]
+
+        listOfSuccessors = []
+        listOfMoves = []
+        otherPlayer = 'user' if self.player == 'computer' else 'user'
+
+        for x in range(1, self.grid.width+1):
+            for y in range(1, self.grid.height+1):
+                if self.grid[x, y] != checkColor:
+                    continue
+
+                if x-1 >= 1 and self.grid[x-1, y] == emptyColor:
+                    listOfMoves.append((x-1, y))
+
+                if x+1 <= self.grid.width and self.grid[x+1, y] == emptyColor:
+                    listOfMoves.append((x+1, y))
+
+                if y-1 >= 1 and self.grid[x, y-1] == emptyColor:
+                    listOfMoves.append((x, y-1))
+
+                if y+1 <= self.grid.height and self.grid[x, y+1] == emptyColor:
+                    listOfMoves.append((x, y+1))
+
+        for move in listOfMoves:
+            new_grid = self.grid.copy()
+            new_grid[move] = emptyColor
+            successor = GameState(new_grid, move, otherPlayer, 1-self.colorIndex)
+            listOfSuccessors.append(successor)
+        return listOfSuccessors
+
     def getSuccessors(self):
         checkColor = self.grid.REPRESENTATION[self.colorIndex]
         otherColor = self.grid.REPRESENTATION[1-self.colorIndex]
@@ -460,5 +510,5 @@ class GameState:
         return listOfSuccessors
 
 
-game = Game('user')
+game = Game('computer')
 game.play(4)
