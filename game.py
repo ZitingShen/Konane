@@ -158,7 +158,13 @@ class Game:
             print 'Initial position is not valid.'
             init = tuple(int(str.strip()) for str in raw_input('Choose the initial position of your move: ').split(','))
 
-        dest = tuple(int(str.strip()) for str in raw_input('Choose the destination position of your move: ').split(','))
+        while True:
+            try:
+                dest = tuple(int(str.strip()) for str in raw_input('Choose the destination position of your move: ').split(','))
+                break
+            except ValueError:
+                print("Input is not integer.")
+                
         while (len(dest) != 2) or (dest[0] not in range(1, self.grid.width+1)) or (dest[1] not in range(1, self.grid.height+1)):
             print 'Destination position is not valid.'
             dest = tuple(int(str.strip()) for str in raw_input('Choose the destination position of your move: ').split(','))
