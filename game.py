@@ -349,10 +349,15 @@ class GameState:
         """
         # if player has no move, then player lost, -inf or inf depend on who the player is
         # if player has moves, use heuristics.
+        
         #checkColorMoves = self.getAvailableMoves(self.colorIndex)
         #otherColorMoves = self.getAvailableMoves(1-self.colorIndex)
-        checkColorMoves = self.getAvailableMovesPreferLonger(self.colorIndex)
-        otherColorMoves = self.getAvailableMovesPreferLonger(1-self.colorIndex)
+        
+        #checkColorMoves = self.getAvailableMovesPreferLonger(self.colorIndex)
+        #otherColorMoves = self.getAvailableMovesPreferLonger(1-self.colorIndex)
+
+        checkColorMoves = self.getPieceCountDifference(self.colorIndex)
+        otherColorMoves = self.getPieceCountDifference(1-self.colorIndex)
 
         if self.player == 'computer':
             if checkColorMoves == 0: #computer doesn't have moves
@@ -368,6 +373,16 @@ class GameState:
                 return float('-inf')
             else:
                 return otherColorMoves - checkColorMoves
+
+    def getPieceCountDifference(self, checkColorIndex):
+        """
+        Calculate the difference between the numbers of pieces.
+        :param grid: the current game board
+        :param checkColorIndex: the index of color of the player being checked
+        :return: the difference of number of pieces
+        """
+        return self.grid.countPlayerX() if self.grid.REPRESENTATION[checkColorIndex] == 'X' \
+            else self.grid.countPlayerO()
 
     def getAvailableMoves(self, checkColorIndex):
         """
