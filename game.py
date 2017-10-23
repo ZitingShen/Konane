@@ -147,7 +147,13 @@ class Game:
         Get the move of the user from keyboard.
         :return: tuple of the initial and destination position
         """
-        init = tuple(int(str.strip()) for str in raw_input('Choose the initial position of your move: ').split(','))
+        while True:
+            try:
+                init = tuple(int(str.strip()) for str in raw_input('Choose the initial position of your move: ').split(','))
+                break
+            except ValueError:
+                print("Input is not integer.")
+
         while (len(init) != 2) or (init[0] not in range(1, self.grid.width+1)) or (init[1] not in range(1, self.grid.height+1)):
             print 'Initial position is not valid.'
             init = tuple(int(str.strip()) for str in raw_input('Choose the initial position of your move: ').split(','))
@@ -164,7 +170,13 @@ class Game:
         Get the first move of the user from keyboard.
         :return: tuple of the piece position
         """
-        move = tuple(int(str.strip()) for str in raw_input('Choose your first move: ').split(','))
+        while True:
+            try:
+                move = tuple(int(str.strip()) for str in raw_input('Choose your first move: ').split(','))
+                break
+            except ValueError:
+                print("Input is not a integer.")
+
         while move not in [(1, 1), (self.grid.width/2, self.grid.height/2), \
                 (self.grid.width/2+1, self.grid.height/2+1), (self.grid.width, self.grid.height)]:
             print 'First move is not valid.'
@@ -176,7 +188,13 @@ class Game:
         Get the second move of the user from keyboard.
         :return: tuple of the piece position
         """
-        move = tuple(int(str.strip()) for str in raw_input('Choose your second move: ').split(','))
+        while True:
+            try:
+                move = tuple(int(str.strip()) for str in raw_input('Choose your second move: ').split(','))
+                break
+            except ValueError:
+                print("Input is not a integer.")
+
         while len(move) != 2 or abs(move[0]-firstMove[0]) + abs(move[1]-firstMove[1]) != 1:
             print 'Second move is not valid.'
             move = tuple(int(str.strip()) for str in raw_input('Choose your second move: ').split(','))
@@ -331,8 +349,10 @@ class GameState:
         """
         # if player has no move, then player lost, -inf or inf depend on who the player is
         # if player has moves, use heuristics.
-        checkColorMoves = self.getAvailableMoves(self.colorIndex)
-        otherColorMoves = self.getAvailableMoves(1-self.colorIndex)
+        #checkColorMoves = self.getAvailableMoves(self.colorIndex)
+        #otherColorMoves = self.getAvailableMoves(1-self.colorIndex)
+        checkColorMoves = self.getAvailableMovesPreferLonger(self.colorIndex)
+        otherColorMoves = self.getAvailableMovesPreferLonger(1-self.colorIndex)
 
         if self.player == 'computer':
             if checkColorMoves == 0: #computer doesn't have moves
@@ -350,6 +370,41 @@ class GameState:
                 return otherColorMoves - checkColorMoves
 
     def getAvailableMoves(self, checkColorIndex):
+        """
+        Calculate the number of potential moves of a player. Moves that lie on the same direction
+        are not repeatedly counted.
+        :param grid: the current game board
+        :param checkColorIndex: the index of color of the player being checked
+        :return: integer value of available moves for color
+        """
+        checkColor = self.grid.REPRESENTATION[checkColorIndex]
+        otherColor = self.grid.REPRESENTATION[1-checkColorIndex]
+        emptyColor = self.grid.REPRESENTATION[2]
+
+        result = 0
+        for x in range(1, self.grid.width+1):
+            for y in range(1, self.grid.height+1):
+                if self.grid[x, y] != checkColor:
+                    continue
+
+                if x - 2 >= 1 and self.grid[x - 1, y] == otherColor \
+                        and self.grid[x - 2, y] == emptyColor:
+                    result += 1
+                
+                if x + 2 <= self.grid.width and self.grid[x + 1, y] == otherColor \
+                        and self.grid[x + 2, y] == emptyColor:
+                    result += 1
+
+                if y - 2 >= 1 and self.grid[x, y - 1] == otherColor \
+                        and self.grid[x, y - 2] == emptyColor:
+                    result += 1
+
+                if y + 2 <= self.grid.height and self.grid[x, y + 1] == otherColor \
+                        and self.grid[x, y + 2] == emptyColor:
+                    result += 1
+        return result
+
+    def getAvailableMovesPreferLonger(self, checkColorIndex):
         """
         Calculate the number of potential moves of a player. Moves that lie on the same direction
         are not repeatedly counted. Instead, the longer the player can move in one direction, the 
@@ -513,5 +568,5 @@ class GameState:
         return listOfSuccessors
 
 
-game = Game('computer')
+game = Game('user')
 game.play(4)
