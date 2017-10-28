@@ -66,6 +66,20 @@ class Grid:
     def countPlayerO(self):
         return sum([x.count(self.REPRESENTATION[1]) for x in self.data])
 
+    def countPlayerXEdge(self):
+        result = self.data[0].count(self.REPRESENTATION[0]) + self.data[height-1].count(self.REPRESENTATION[0])
+        for x in range(1, height-1):
+            if self.data[x][0] == self.REPRESENTATION[0]:
+                result += 1
+        return result
+
+    def countPlayerYEdge(self):
+        result = self.data[0].count(self.REPRESENTATION[1]) + self.data[height-1].count(self.REPRESENTATION[1])
+        for x in range(1, height-1):
+            if self.data[x][0] == self.REPRESENTATION[1]:
+                result += 1
+        return result
+
     def countEmptySpace(self):
         return sum([x.count(self.REPRESENTATION[2]) for x in self.data])
 
@@ -93,7 +107,8 @@ class Game:
         """
         Play the game.
         """
-        ifPrint = True
+        ifPrint = False
+        ifTest = True
         round = 1
         endOfGame = False
         firstMove = ()
@@ -101,44 +116,44 @@ class Game:
             if ifPrint:
                 print self.grid
             if self.moveNow == 'user':
-                """
-                if round == 1:
-                    firstMove = self.getFirstMove()
-                    self.grid[firstMove] = self.grid.REPRESENTATION[2]
-                elif round == 2:
-                    secondMove = self.getSecondMove(firstMove)
-                    self.grid[secondMove] = self.grid.REPRESENTATION[2]
-                else:
-                    success = False
-                    while not success:
-                        init, dest = self.getMove()
-                        success = self.checkLegalMove(init, dest, int(self.moveNow!=self.moveFirst))
-                    self.makeMove(init, dest, int(self.moveNow!=self.moveFirst))
-                """
-                #test with AI
-                if round == 1:
-                    currentState = GameState(self.grid, None, 'user', int(self.moveNow!=self.moveFirst))     
-                    #bestValue, firstMove = minimaxNaive(currentState, minimaxDepth, round)
-                    bestValue, firstMove = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
-                    self.grid[firstMove] = self.grid.REPRESENTATION[2]
-                    if ifPrint:
-                        print 'User removed piece at', firstMove
+                if ifTest:
+                    #test with AI
+                    if round == 1:
+                        currentState = GameState(self.grid, None, 'user', int(self.moveNow!=self.moveFirst))     
+                        #bestValue, firstMove = minimaxNaive(currentState, minimaxDepth, round)
+                        bestValue, firstMove = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                        self.grid[firstMove] = self.grid.REPRESENTATION[2]
+                        if ifPrint:
+                            print 'User removed piece at', firstMove
 
-                elif round == 2:
-                    currentState = GameState(self.grid, None, 'user', int(self.moveNow!=self.moveFirst))
-                    #bestValue, secondMove = minimaxNaive(currentState, minimaxDepth, round)
-                    bestValue, secondMove = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
-                    self.grid[secondMove] = self.grid.REPRESENTATION[2]
-                    if ifPrint:
-                        print 'User removed piece at', secondMove
+                    elif round == 2:
+                        currentState = GameState(self.grid, None, 'user', int(self.moveNow!=self.moveFirst))
+                        #bestValue, secondMove = minimaxNaive(currentState, minimaxDepth, round)
+                        bestValue, secondMove = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                        self.grid[secondMove] = self.grid.REPRESENTATION[2]
+                        if ifPrint:
+                            print 'User removed piece at', secondMove
+                    else:
+                        currentState = GameState(self.grid, None, 'user', int(self.moveNow!=self.moveFirst))
+                        #bestValue, move = minimaxNaive(currentState, minimaxDepth, round)
+                        bestValue, move = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                        self.makeMove(move[0], move[1], int(self.moveNow!=self.moveFirst))
+                        if ifPrint:
+                            print 'User moved piece at', move[0], 'to', move[1]
                 else:
-                    currentState = GameState(self.grid, None, 'user', int(self.moveNow!=self.moveFirst))
-                    #bestValue, move = minimaxNaive(currentState, minimaxDepth, round)
-                    bestValue, move = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
-                    self.makeMove(move[0], move[1], int(self.moveNow!=self.moveFirst))
-                    if ifPrint:
-                        print 'User moved piece at', move[0], 'to', move[1]
-                
+                    if round == 1:
+                        firstMove = self.getFirstMove()
+                        self.grid[firstMove] = self.grid.REPRESENTATION[2]
+                    elif round == 2:
+                        secondMove = self.getSecondMove(firstMove)
+                        self.grid[secondMove] = self.grid.REPRESENTATION[2]
+                    else:
+                        success = False
+                        while not success:
+                            init, dest = self.getMove()
+                            success = self.checkLegalMove(init, dest, int(self.moveNow!=self.moveFirst))
+                        self.makeMove(init, dest, int(self.moveNow!=self.moveFirst))
+
                 self.moveNow = 'computer'
             else:
                 if round == 1:
@@ -398,19 +413,24 @@ class GameState:
         checkColorPieces = self.getPieceCount(self.colorIndex)
         otherColorPieces = self.getPieceCount(1-self.colorIndex)
 
+        #checkColorEdgePieces = self.getEgdePieceCount(self.colorIndex)
+        #otherColorEdgePieces = self.getEgdePieceCount(1-self.colorIndex)
+
         if self.player == 'computer':
             if checkColorMoves == 0: #computer doesn't have moves
                 return float('-inf')
             elif otherColorMoves == 0: #user doesn't have moves
                 return float('inf')
             else:
-                return checkColorPieces - otherColorPieces
+                #return checkColorPieces - otherColorPieces
+                return  checkColorPieces - otherColorPieces
         else:
             if checkColorMoves == 0: #user doesn't have moves
                 return float('inf')
             elif otherColorMoves == 0: #computer doesn't have moves
                 return float('-inf')
             else:
+                #return otherColorPieces - checkColorPieces
                 return otherColorPieces - checkColorPieces
 
     def getPieceCount(self, checkColorIndex):
@@ -422,6 +442,16 @@ class GameState:
         """
         return self.grid.countPlayerX() if self.grid.REPRESENTATION[checkColorIndex] == 'X' \
             else self.grid.countPlayerO()
+
+    def getEgdePieceCount(self, checkColorIndex):
+        """
+        Calculate the numbers of pieces on the edge.
+        :param grid: the current game board
+        :param checkColorIndex: the index of color of the player being checked
+        :return: the number of pieces on the edge
+        """
+        return self.grid.countPlayerXEdge() if self.grid.REPRESENTATION[checkColorIndex] == 'X' \
+            else self.grid.countPlayerOEdge()
 
     def getAvailableMoves(self, checkColorIndex):
         """
@@ -621,7 +651,7 @@ class GameState:
 
         return listOfSuccessors
 
-def calculateWinRate:
+def calculateWinRate():
     times = 20
     winRate = 0.0
     for i in range(times):
@@ -630,5 +660,6 @@ def calculateWinRate:
     winRate = winRate/times
     print "Winrate:", winRate
 
-game = Game('computer')
-game.play(10)
+#game = Game('computer', 4, 4)
+#game.play(10)
+calculateWinRate()
