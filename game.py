@@ -422,15 +422,13 @@ class GameState:
             elif otherColorMoves == 0: #user doesn't have moves
                 return float('inf')
             else:
-                #return checkColorPieces - otherColorPieces
-                return  checkColorPieces - otherColorPieces
+                return checkColorPieces - otherColorPieces
         else:
             if checkColorMoves == 0: #user doesn't have moves
                 return float('inf')
             elif otherColorMoves == 0: #computer doesn't have moves
                 return float('-inf')
             else:
-                #return otherColorPieces - checkColorPieces
                 return otherColorPieces - checkColorPieces
 
     def getPieceCount(self, checkColorIndex):
