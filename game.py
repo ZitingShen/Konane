@@ -93,12 +93,15 @@ class Game:
         """
         Play the game.
         """
+        ifPrint = True
         round = 1
         endOfGame = False
         firstMove = ()
         while not endOfGame:
-            print self.grid
+            if ifPrint:
+                print self.grid
             if self.moveNow == 'user':
+                """
                 if round == 1:
                     firstMove = self.getFirstMove()
                     self.grid[firstMove] = self.grid.REPRESENTATION[2]
@@ -111,36 +114,67 @@ class Game:
                         init, dest = self.getMove()
                         success = self.checkLegalMove(init, dest, int(self.moveNow!=self.moveFirst))
                     self.makeMove(init, dest, int(self.moveNow!=self.moveFirst))
+                """
+                #test with AI
+                if round == 1:
+                    currentState = GameState(self.grid, None, 'user', int(self.moveNow!=self.moveFirst))     
+                    #bestValue, firstMove = minimaxNaive(currentState, minimaxDepth, round)
+                    bestValue, firstMove = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                    self.grid[firstMove] = self.grid.REPRESENTATION[2]
+                    if ifPrint:
+                        print 'User removed piece at', firstMove
+
+                elif round == 2:
+                    currentState = GameState(self.grid, None, 'user', int(self.moveNow!=self.moveFirst))
+                    #bestValue, secondMove = minimaxNaive(currentState, minimaxDepth, round)
+                    bestValue, secondMove = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                    self.grid[secondMove] = self.grid.REPRESENTATION[2]
+                    if ifPrint:
+                        print 'User removed piece at', secondMove
+                else:
+                    currentState = GameState(self.grid, None, 'user', int(self.moveNow!=self.moveFirst))
+                    #bestValue, move = minimaxNaive(currentState, minimaxDepth, round)
+                    bestValue, move = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                    self.makeMove(move[0], move[1], int(self.moveNow!=self.moveFirst))
+                    if ifPrint:
+                        print 'User moved piece at', move[0], 'to', move[1]
+                
                 self.moveNow = 'computer'
             else:
                 if round == 1:
                     currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))     
-                    bestValue, firstMove = minimaxNaive(currentState, minimaxDepth, round)
-                    #bestValue, firstMove = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                    #bestValue, firstMove = minimaxNaive(currentState, minimaxDepth, round)
+                    bestValue, firstMove = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
                     self.grid[firstMove] = self.grid.REPRESENTATION[2]
-                    print 'Computer removed piece at', firstMove, '.'
+                    if ifPrint:
+                        print 'Computer removed piece at', firstMove
                 elif round == 2:
                     currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))
-                    bestValue, secondMove = minimaxNaive(currentState, minimaxDepth, round)
-                    #bestValue, secondMove = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                    #bestValue, secondMove = minimaxNaive(currentState, minimaxDepth, round)
+                    bestValue, secondMove = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
                     self.grid[secondMove] = self.grid.REPRESENTATION[2]
-                    print 'Computer removed piece at', secondMove, '.'
+                    if ifPrint:
+                        print 'Computer removed piece at', secondMove
                 else:
                     currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))
-                    bestValue, move = minimaxNaive(currentState, minimaxDepth, round)
-                    #bestValue, move = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                    #bestValue, move = minimaxNaive(currentState, minimaxDepth, round)
+                    bestValue, move = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
                     self.makeMove(move[0], move[1], int(self.moveNow!=self.moveFirst))
-                    print 'Computer moved piece at', move[0], 'to', move[1], '.'
+                    if ifPrint:
+                        print 'Computer moved piece at', move[0], 'to', move[1]
                 self.moveNow = 'user'
             if round > 2:
                 endOfGame = self.checkEndOfGame(int(self.moveNow!=self.moveFirst))
             round += 1
 
-        print self.grid
+        if ifPrint:
+            print self.grid
         if self.moveNow == 'computer':
             print 'Congratulations! You win!'
+            return 1
         else:
             print 'Oops... You lose.'
+            return 0
 
     def getMove(self):
         """
@@ -164,7 +198,7 @@ class Game:
                 break
             except ValueError:
                 print("Input is not integer.")
-                
+
         while (len(dest) != 2) or (dest[0] not in range(1, self.grid.width+1)) or (dest[1] not in range(1, self.grid.height+1)):
             print 'Destination position is not valid.'
             dest = tuple(int(str.strip()) for str in raw_input('Choose the destination position of your move: ').split(','))
@@ -326,12 +360,11 @@ class GameState:
     Store game state of Konone.
     """
 
-    def __init__(self, grid, move, player, colorIndex, bestValue=None):
+    def __init__(self, grid, move, player, colorIndex):
         """
         :param grid: the current game board.
         :param move: a tupe of the initial and destination positions of the move
         :param player: the current player
-        :param bestValue: the best evaluation value of levels below
         :param colorIndex: the piece color of the current player
         """
         self.grid = grid.copy()
@@ -339,7 +372,7 @@ class GameState:
         self.player = player
         self.minMax = 'max' if self.player == 'computer' else 'min'
         self.colorIndex = colorIndex
-        self.bestValue = self.evaluate() if bestValue == None else bestValue
+        self.bestValue = None
 
     def copy(self):
         return GameState(self.grid.deepCopy(), self.move, self.player, self.colorIndex, self.bestValue)
@@ -356,14 +389,14 @@ class GameState:
         # if player has no move, then player lost, -inf or inf depend on who the player is
         # if player has moves, use heuristics.
         
-        #checkColorMoves = self.getAvailableMoves(self.colorIndex)
-        #otherColorMoves = self.getAvailableMoves(1-self.colorIndex)
+        checkColorMoves = self.getAvailableMoves(self.colorIndex)
+        otherColorMoves = self.getAvailableMoves(1-self.colorIndex)
         
         #checkColorMoves = self.getAvailableMovesPreferLonger(self.colorIndex)
         #otherColorMoves = self.getAvailableMovesPreferLonger(1-self.colorIndex)
 
-        checkColorMoves = self.getPieceCount(self.colorIndex)
-        otherColorMoves = self.getPieceCount(1-self.colorIndex)
+        checkColorPieces = self.getPieceCount(self.colorIndex)
+        otherColorPieces = self.getPieceCount(1-self.colorIndex)
 
         if self.player == 'computer':
             if checkColorMoves == 0: #computer doesn't have moves
@@ -371,14 +404,14 @@ class GameState:
             elif otherColorMoves == 0: #user doesn't have moves
                 return float('inf')
             else:
-                return checkColorMoves - otherColorMoves
+                return checkColorPieces - otherColorPieces
         else:
             if checkColorMoves == 0: #user doesn't have moves
                 return float('inf')
             elif otherColorMoves == 0: #computer doesn't have moves
                 return float('-inf')
             else:
-                return otherColorMoves - checkColorMoves
+                return otherColorPieces - checkColorPieces
 
     def getPieceCount(self, checkColorIndex):
         """
@@ -588,6 +621,14 @@ class GameState:
 
         return listOfSuccessors
 
+def calculateWinRate:
+    times = 20
+    winRate = 0.0
+    for i in range(times):
+        game = Game('computer')
+        winRate += game.play(10)
+    winRate = winRate/times
+    print "Winrate:", winRate
 
-game = Game('user')
-game.play(4)
+game = Game('computer')
+game.play(10)

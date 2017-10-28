@@ -8,6 +8,7 @@ def minimaxNaive(state, limit, round):
     :return: cbv, best move
     """
     if limit == 0:
+        state.bestValue = state.evaluate()
         return state.bestValue, state.move
 
     listOfSuccessor = []
@@ -45,10 +46,11 @@ def minimaxNaive(state, limit, round):
 def minimaxAlphaBeta(state, limit, round, alpha, beta):
     """
     Minmax algorithm with Alpha-Beta pruning.
-    :param state:
-    :param alpha:
-    :param beta:
-    :return:
+    :param state: current state of game, class GameState
+    :param limit: an integer that indicates limit
+    :param alpha: the min value of the max level
+    :param beta: the max value of the min level
+    :return: cbv, best move
     """
     if limit == 0:
         return state.bestValue, state.move
