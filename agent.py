@@ -5,11 +5,14 @@ def minimaxNaive(state, limit, round):
     Naive Minmax algorithm
     :param state: current state of game, class GameState
     :param limit: an integer that indicates limit
-    :return: cbv, best move
+    :return: cbv, best move, number of evaluations
     """
+    numberEvaluate = 0
+
     if limit == 0:
         state.bestValue = state.evaluate()
-        return state.bestValue, state.move
+        numberEvaluate += 1
+        return state.bestValue, state.move, numberEvaluate
 
     listOfSuccessor = []
     if round == 1:
@@ -23,24 +26,26 @@ def minimaxNaive(state, limit, round):
         cbv = float("-inf")
         bestMove = None
         for successor in listOfSuccessor:
-            bv, move = minimaxNaive(successor, limit-1, round+1)
+            bv, move, successorEvaluate = minimaxNaive(successor, limit-1, round+1)
+            numberEvaluate += successorEvaluate
             if bv > cbv:
                 cbv = bv
                 bestMove = successor.move
         if listOfSuccessor and bestMove == None:
             bestMove = random.choice(listOfSuccessor).move
-        return cbv, bestMove
+        return cbv, bestMove, numberEvaluate
     else:
         cbv = float("inf")
         bestMove = None
         for successor in listOfSuccessor:
-            bv, move = minimaxNaive(successor, limit-1, round+1)
+            bv, move, successorEvaluate = minimaxNaive(successor, limit-1, round+1)
+            numberEvaluate += successorEvaluate
             if bv < cbv:
                 cbv = bv
                 bestMove = successor.move
         if listOfSuccessor and bestMove == None:
             bestMove = random.choice(listOfSuccessor).move
-        return cbv, bestMove
+        return cbv, bestMove, numberEvaluate
 
 
 def minimaxAlphaBeta(state, limit, round, alpha, beta):
@@ -50,10 +55,14 @@ def minimaxAlphaBeta(state, limit, round, alpha, beta):
     :param limit: an integer that indicates limit
     :param alpha: the min value of the max level
     :param beta: the max value of the min level
-    :return: cbv, best move
+    :return: cbv, best move, number of evaluations
     """
+    numberEvaluate = 0
+
     if limit == 0:
-        return state.bestValue, state.move
+        state.bestValue = state.evaluate()
+        numberEvaluate += 1
+        return state.bestValue, state.move, numberEvaluate
 
     listOfSuccessor = []
     if round == 1:
@@ -67,7 +76,8 @@ def minimaxAlphaBeta(state, limit, round, alpha, beta):
         cbv = float("-inf")
         bestMove = None
         for successor in listOfSuccessor:
-            bv, move = minimaxAlphaBeta(successor, limit-1, round+1, alpha, beta)
+            bv, move, successorEvaluate = minimaxAlphaBeta(successor, limit-1, round+1, alpha, beta)
+            numberEvaluate += successorEvaluate
             if bv > cbv:
                 cbv = bv
                 bestMove = successor.move
@@ -76,12 +86,13 @@ def minimaxAlphaBeta(state, limit, round, alpha, beta):
                 break
         if listOfSuccessor and bestMove == None:
             bestMove = random.choice(listOfSuccessor).move
-        return cbv, bestMove
+        return cbv, bestMove, numberEvaluate
     else:
         cbv = float("inf")
         bestMove = None
         for successor in listOfSuccessor:
-            bv, move = minimaxAlphaBeta(successor, limit-1, round+1, alpha, beta)
+            bv, move, successorEvaluate = minimaxAlphaBeta(successor, limit-1, round+1, alpha, beta)
+            numberEvaluate += successorEvaluate
             if bv < cbv:
                 cbv = bv
                 bestMove = successor.move
@@ -90,4 +101,4 @@ def minimaxAlphaBeta(state, limit, round, alpha, beta):
                 break
         if listOfSuccessor and bestMove == None:
             bestMove = random.choice(listOfSuccessor).move
-        return cbv, bestMove
+        return cbv, bestMove, numberEvaluate

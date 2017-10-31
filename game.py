@@ -103,15 +103,16 @@ class Game:
         self.moveNow = moveFirst
         self.grid = Grid(width, height)
 
-    def play(self, minimaxDepth):
+    def play(self, minimaxDepth, ifPrint, ifTest):
         """
         Play the game.
         """
-        ifPrint = False
-        ifTest = True
         round = 1
         endOfGame = False
         firstMove = ()
+
+        totalUserEvaluate = 0
+        totalComputerEvaluate = 0
         while not endOfGame:
             if ifPrint:
                 print self.grid
@@ -120,23 +121,26 @@ class Game:
                     #test with AI
                     if round == 1:
                         currentState = GameState(self.grid, None, 'user', int(self.moveNow!=self.moveFirst))     
-                        #bestValue, firstMove = minimaxNaive(currentState, minimaxDepth, round)
-                        bestValue, firstMove = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                        #bestValue, firstMove, numberEvaluate = minimaxNaive(currentState, minimaxDepth, round)
+                        bestValue, firstMove, numberEvaluate = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                        totalUserEvaluate += numberEvaluate
                         self.grid[firstMove] = self.grid.REPRESENTATION[2]
                         if ifPrint:
                             print 'User removed piece at', firstMove
 
                     elif round == 2:
                         currentState = GameState(self.grid, None, 'user', int(self.moveNow!=self.moveFirst))
-                        #bestValue, secondMove = minimaxNaive(currentState, minimaxDepth, round)
-                        bestValue, secondMove = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                        #bestValue, secondMove, numberEvaluate = minimaxNaive(currentState, minimaxDepth, round)
+                        bestValue, secondMove, numberEvaluate = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                        totalUserEvaluate += numberEvaluate
                         self.grid[secondMove] = self.grid.REPRESENTATION[2]
                         if ifPrint:
                             print 'User removed piece at', secondMove
                     else:
                         currentState = GameState(self.grid, None, 'user', int(self.moveNow!=self.moveFirst))
-                        #bestValue, move = minimaxNaive(currentState, minimaxDepth, round)
-                        bestValue, move = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                        #bestValue, move, numberEvaluate = minimaxNaive(currentState, minimaxDepth, round)
+                        bestValue, move, numberEvaluate = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                        totalUserEvaluate += numberEvaluate
                         self.makeMove(move[0], move[1], int(self.moveNow!=self.moveFirst))
                         if ifPrint:
                             print 'User moved piece at', move[0], 'to', move[1]
@@ -158,22 +162,25 @@ class Game:
             else:
                 if round == 1:
                     currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))     
-                    #bestValue, firstMove = minimaxNaive(currentState, minimaxDepth, round)
-                    bestValue, firstMove = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                    #bestValue, firstMove, numberEvaluate = minimaxNaive(currentState, minimaxDepth, round)
+                    bestValue, firstMove, numberEvaluate = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                    totalComputerEvaluate +=  numberEvaluate
                     self.grid[firstMove] = self.grid.REPRESENTATION[2]
                     if ifPrint:
                         print 'Computer removed piece at', firstMove
                 elif round == 2:
                     currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))
-                    #bestValue, secondMove = minimaxNaive(currentState, minimaxDepth, round)
-                    bestValue, secondMove = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                    #bestValue, secondMove, numberEvaluate = minimaxNaive(currentState, minimaxDepth, round)
+                    bestValue, secondMove, numberEvaluate = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                    totalComputerEvaluate +=  numberEvaluate
                     self.grid[secondMove] = self.grid.REPRESENTATION[2]
                     if ifPrint:
                         print 'Computer removed piece at', secondMove
                 else:
                     currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))
-                    #bestValue, move = minimaxNaive(currentState, minimaxDepth, round)
-                    bestValue, move = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                    #bestValue, move, numberEvaluate = minimaxNaive(currentState, minimaxDepth, round)
+                    bestValue, move, numberEvaluate = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                    totalComputerEvaluate +=  numberEvaluate
                     self.makeMove(move[0], move[1], int(self.moveNow!=self.moveFirst))
                     if ifPrint:
                         print 'Computer moved piece at', move[0], 'to', move[1]
@@ -184,12 +191,18 @@ class Game:
 
         if ifPrint:
             print self.grid
+
+        if ifTest:
+            print 'Total times of evaluation for user:', totalUserEvaluate
+        print 'Total times of evaluation for computer:', totalComputerEvaluate
+
         if self.moveNow == 'computer':
             print 'Congratulations! You win!'
             return 1
         else:
             print 'Oops... You lose.'
             return 0
+            
 
     def getMove(self):
         """
@@ -385,7 +398,7 @@ class GameState:
         self.grid = grid.copy()
         self.move = move
         self.player = player
-        self.minMax = 'max' if self.player == 'computer' else 'min'
+        self.minMax = 'max' if player == 'computer' else 'min'
         self.colorIndex = colorIndex
         self.bestValue = None
 
@@ -422,14 +435,16 @@ class GameState:
             elif otherColorMoves == 0: #user doesn't have moves
                 return float('inf')
             else:
-                return checkColorPieces - otherColorPieces
+                #return checkColorPieces - otherColorPieces
+                return checkColorMoves - otherColorMoves
         else:
             if checkColorMoves == 0: #user doesn't have moves
                 return float('inf')
             elif otherColorMoves == 0: #computer doesn't have moves
                 return float('-inf')
             else:
-                return otherColorPieces - checkColorPieces
+                #return otherColorPieces - checkColorPieces
+                return otherColorMoves - checkColorMoves
 
     def getPieceCount(self, checkColorIndex):
         """
@@ -650,14 +665,14 @@ class GameState:
         return listOfSuccessors
 
 def calculateWinRate():
-    times = 20
+    times = 10
     winRate = 0.0
     for i in range(times):
-        game = Game('computer')
-        winRate += game.play(10)
+        game = Game('user', 6, 6)
+        winRate += game.play(5, False, True)
     winRate = winRate/times
     print "Winrate:", winRate
 
-#game = Game('computer', 4, 4)
-#game.play(10)
-calculateWinRate()
+game = Game('user', 6, 6)
+game.play(5, True, False)
+#calculateWinRate()
