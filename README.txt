@@ -1,1 +1,3 @@
 A report describing your implementation of the game playing algorithm(s) noting clearly any variations from the standard algorithm. Explain your static evaluation funtion.
+
+We add a MinimaxInfo class to record the meta information used in the Minimax  algorithm, i.e. the branching factors, the number of cutoffs, and the total time of static evaluations done. We ask for the index of the round of moves as an input to determine if we are trying to make the first or second moves. If so, the list of successors will be generated according to the rules of Konane. When returning moves, the move that generates one of the successor will be returned.
