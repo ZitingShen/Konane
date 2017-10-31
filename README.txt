@@ -1,0 +1,1 @@
+A report describing your implementation of the game playing algorithm(s) noting clearly any variations from the standard algorithm. Explain your static evaluation funtion.

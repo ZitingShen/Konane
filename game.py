@@ -1,5 +1,7 @@
 from agent import minimaxNaive
 from agent import minimaxAlphaBeta
+from agent import randomAgent
+from agent import MinimaxInfo
 
 class Grid:
     """
@@ -7,6 +9,10 @@ class Grid:
     """
 
     def __init__(self, width=8, height=8):
+        """
+        :param width: width of the game board
+        :param height: height of the game board
+        """
         self.REPRESENTATION = ['X', 'O', '.']
 
         self.width = width
@@ -14,13 +20,27 @@ class Grid:
         self.data = [[self.REPRESENTATION[(x + y) % 2] for y in range(height)] for x in range(width)]
 
     def __getitem__(self, index):
+        """
+        Get an item from the game board.
+        :param index: index of the cell in the game board represented by a 2-tuple
+        :return the value of the cell
+        """
         return self.data[index[0] - 1][index[1] - 1]
 
     def __setitem__(self, index, item):
+        """
+        Set an item in the game board.
+        :param index: index of the cell in the game board represented by a 2-tuple
+        :param item: the expected value of the cell in the game board
+        """
         if item not in self.REPRESENTATION: raise Exception('Grids can only \'X\', \'O\' and \'.\'')
         self.data[index[0] - 1][index[1] - 1] = item
 
     def __str__(self):
+        """
+        Represent the game board by a string.
+        :return the string representation of the board
+        """
         out = '    '
         for j in range(self.width):
             out += str(j + 1) + ' '
@@ -33,11 +53,19 @@ class Grid:
         return out
 
     def __eq__(self, other):
+        """
+        Compare two game boards.
+        :param other: the other board being compared
+        :return if the two boards are the same
+        """
         if other == None: return False
         return self.data == other.data
 
     def __hash__(self):
-        # return hash(str(self))
+        """
+        The hash function of the game board.
+        :return the hash value of the game board
+        """
         base = 1
         h = 0
         for l in self.data:
@@ -48,25 +76,43 @@ class Grid:
         return hash(h)
 
     def copy(self):
+        """
+        :return a deep copy of the game board
+        """
         g = Grid(self.width, self.height)
         g.data = [x[:] for x in self.data]
         return g
 
     def deepCopy(self):
+        """
+        :return a deep copy of the game board
+        """
         return self.copy()
 
     def shallowCopy(self):
+        """
+        :return a shallow copy of the game board
+        """
         g = Grid(self.width, self.height)
         g.data = self.data
         return g
 
     def countPlayerX(self):
+        """
+        :return the total number of dark pieces on the board
+        """
         return sum([x.count(self.REPRESENTATION[0]) for x in self.data])
 
     def countPlayerO(self):
+        """
+        :return the total number of light pieces on the board
+        """
         return sum([x.count(self.REPRESENTATION[1]) for x in self.data])
 
     def countPlayerXEdge(self):
+        """
+        :return the total number of dark pieces on the edge of the board
+        """
         result = self.data[0].count(self.REPRESENTATION[0]) + self.data[height-1].count(self.REPRESENTATION[0])
         for x in range(1, height-1):
             if self.data[x][0] == self.REPRESENTATION[0]:
@@ -74,6 +120,9 @@ class Grid:
         return result
 
     def countPlayerYEdge(self):
+        """
+        :return the total number of light pieces on the edge of the board
+        """
         result = self.data[0].count(self.REPRESENTATION[1]) + self.data[height-1].count(self.REPRESENTATION[1])
         for x in range(1, height-1):
             if self.data[x][0] == self.REPRESENTATION[1]:
@@ -81,9 +130,15 @@ class Grid:
         return result
 
     def countEmptySpace(self):
+        """
+        :return the total number of empty cells on the board
+        """
         return sum([x.count(self.REPRESENTATION[2]) for x in self.data])
 
     def asList(self):
+        """
+        :return the 2D game board as a 1D list
+        """
         list = []
         for x in range(self.width):
             for y in range(self.height):
@@ -93,56 +148,94 @@ class Grid:
 
 class Game:
     """
-    Play the Konone game.
+    Play the Konane game.
     """
 
     def __init__(self, moveFirst, width=8, height=8):
+        """
+        :param width: width of the game board
+        :param height: height of the game board
+        """
         if moveFirst not in ['computer', 'user']:
             raise Exception('Either computer or user move first.')
         self.moveFirst = moveFirst
         self.moveNow = moveFirst
         self.grid = Grid(width, height)
 
-    def play(self, minimaxDepth, ifPrint, ifTest):
+    def play(self, minimaxDepth, ifPrint, ifTestRandom, ifTestCombat, ifAlphaBeta):
         """
         Play the game.
+        :param minimaxDepth: an integer represents the depth of the minimax search
+        :param ifPrint: a boolean represents if the board information of each step is printed
+        :param ifTestRandom: a boolean represents whether to let a random agent play as the user to test
+        :param ifTestCombat: a boolean represents whether to let a minimax agent play as the user to test
+        :param ifAlphaBeta: a boolean represents whether to use alpha beta pruning in the minimax algorithm
+        :return 1 if the player wins, 0 if the computer wins
         """
         round = 1
         endOfGame = False
         firstMove = ()
 
-        totalUserEvaluate = 0
-        totalComputerEvaluate = 0
+        userMinimaxInfo = MinimaxInfo()
+        computerMinimaxInfo = MinimaxInfo()
         while not endOfGame:
             if ifPrint:
                 print self.grid
             if self.moveNow == 'user':
-                if ifTest:
-                    #test with AI
+                if ifTestCombat:
+                    #test: two minimax agents combat with each other
                     if round == 1:
-                        currentState = GameState(self.grid, None, 'user', int(self.moveNow!=self.moveFirst))     
-                        #bestValue, firstMove, numberEvaluate = minimaxNaive(currentState, minimaxDepth, round)
-                        bestValue, firstMove, numberEvaluate = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
-                        totalUserEvaluate += numberEvaluate
+                        currentState = GameState(self.grid, None, 'user', int(self.moveNow!=self.moveFirst))
+                        
+                        firstMove = None
+                        minimaxInfo = None
+                        if ifAlphaBeta:
+                            bestValue, firstMove, minimaxInfo = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                        else:
+                            bestValue, firstMove, minimaxInfo = minimaxNaive(currentState, minimaxDepth, round)
+                        
+                        userMinimaxInfo += minimaxInfo
                         self.grid[firstMove] = self.grid.REPRESENTATION[2]
                         if ifPrint:
                             print 'User removed piece at', firstMove
 
                     elif round == 2:
                         currentState = GameState(self.grid, None, 'user', int(self.moveNow!=self.moveFirst))
-                        #bestValue, secondMove, numberEvaluate = minimaxNaive(currentState, minimaxDepth, round)
-                        bestValue, secondMove, numberEvaluate = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
-                        totalUserEvaluate += numberEvaluate
+                        
+                        secondMove = None
+                        minimaxInfo = None
+                        if ifAlphaBeta:
+                            bestValue, secondMove, minimaxInfo = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                        else:
+                            bestValue, secondMove, minimaxInfo = minimaxNaive(currentState, minimaxDepth, round)
+                        
+                        userMinimaxInfo += minimaxInfo
                         self.grid[secondMove] = self.grid.REPRESENTATION[2]
                         if ifPrint:
                             print 'User removed piece at', secondMove
                     else:
                         currentState = GameState(self.grid, None, 'user', int(self.moveNow!=self.moveFirst))
-                        #bestValue, move, numberEvaluate = minimaxNaive(currentState, minimaxDepth, round)
-                        bestValue, move, numberEvaluate = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
-                        totalUserEvaluate += numberEvaluate
+                        
+                        move = None
+                        minimaxInfo = None
+                        if ifAlphaBeta:
+                            bestValue, move, minimaxInfo = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                        else:
+                            bestValue, move, minimaxInfo = minimaxNaive(currentState, minimaxDepth, round)
+                        
+                        userMinimaxInfo += minimaxInfo
                         self.makeMove(move[0], move[1], int(self.moveNow!=self.moveFirst))
                         if ifPrint:
+                            print 'User moved piece at', move[0], 'to', move[1]
+                elif ifTestRandom:
+                    # test: a random agent combat with a minimax agent
+                    currentState = GameState(self.grid, None, 'user', int(self.moveNow!=self.moveFirst))
+                    move = randomAgent(currentState, round)
+                    if round == 1 or round == 2:
+                        self.grid[move] = self.grid.REPRESENTATION[2]
+                    else:
+                        self.makeMove(move[0], move[1], int(self.moveNow!=self.moveFirst))
+                    if ifPrint:
                             print 'User moved piece at', move[0], 'to', move[1]
                 else:
                     if round == 1:
@@ -162,25 +255,43 @@ class Game:
             else:
                 if round == 1:
                     currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))     
-                    #bestValue, firstMove, numberEvaluate = minimaxNaive(currentState, minimaxDepth, round)
-                    bestValue, firstMove, numberEvaluate = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
-                    totalComputerEvaluate +=  numberEvaluate
+                    
+                    firstMove = None
+                    minimaxInfo = None
+                    if ifAlphaBeta:
+                        bestValue, firstMove, minimaxInfo = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                    else:
+                        bestValue, firstMove, minimaxInfo = minimaxNaive(currentState, minimaxDepth, round)
+
+                    computerMinimaxInfo +=  minimaxInfo
                     self.grid[firstMove] = self.grid.REPRESENTATION[2]
                     if ifPrint:
                         print 'Computer removed piece at', firstMove
                 elif round == 2:
                     currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))
-                    #bestValue, secondMove, numberEvaluate = minimaxNaive(currentState, minimaxDepth, round)
-                    bestValue, secondMove, numberEvaluate = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
-                    totalComputerEvaluate +=  numberEvaluate
+                    
+                    secondMove = None
+                    minimaxInfo = None
+                    if ifAlphaBeta:
+                        bestValue, secondMove, minimaxInfo = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                    else:
+                        bestValue, secondMove, minimaxInfo = minimaxNaive(currentState, minimaxDepth, round)
+
+                    computerMinimaxInfo +=  minimaxInfo
                     self.grid[secondMove] = self.grid.REPRESENTATION[2]
                     if ifPrint:
                         print 'Computer removed piece at', secondMove
                 else:
                     currentState = GameState(self.grid, None, 'computer', int(self.moveNow!=self.moveFirst))
-                    #bestValue, move, numberEvaluate = minimaxNaive(currentState, minimaxDepth, round)
-                    bestValue, move, numberEvaluate = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
-                    totalComputerEvaluate +=  numberEvaluate
+                    
+                    move = None
+                    minimaxInfo = None
+                    if ifAlphaBeta:
+                        bestValue, move, minimaxInfo = minimaxAlphaBeta(currentState, minimaxDepth, round, float('-inf'), float('inf'))
+                    else:
+                        bestValue, move, minimaxInfo = minimaxNaive(currentState, minimaxDepth, round)
+
+                    computerMinimaxInfo +=  minimaxInfo
                     self.makeMove(move[0], move[1], int(self.moveNow!=self.moveFirst))
                     if ifPrint:
                         print 'Computer moved piece at', move[0], 'to', move[1]
@@ -192,9 +303,18 @@ class Game:
         if ifPrint:
             print self.grid
 
-        if ifTest:
-            print 'Total times of evaluation for user:', totalUserEvaluate
-        print 'Total times of evaluation for computer:', totalComputerEvaluate
+        if ifTestCombat:
+            print '\nUser minimax meta information:'
+            print 'Total times of static evaluation:', userMinimaxInfo.numberEvaluation
+            print 'Average branching factor:', userMinimaxInfo.totalBranchingFactors * 1.00 / userMinimaxInfo.numberBranchingFactors
+            if ifAlphaBeta:
+                print 'Number of cutoffs:', userMinimaxInfo.numberCutoffs
+
+        print '\nComputer minimix meta information:'
+        print 'Total times of static evaluation:', computerMinimaxInfo.numberEvaluation
+        print 'Average branching factor:', computerMinimaxInfo.totalBranchingFactors * 1.00 / computerMinimaxInfo.numberBranchingFactors
+        if ifAlphaBeta:
+            print 'Number of cutoffs:', computerMinimaxInfo.numberCutoffs
 
         if self.moveNow == 'computer':
             print 'Congratulations! You win!'
@@ -333,7 +453,6 @@ class Game:
         :param initialPosition: a tuple of coordinate (x,y)
         :param destinationPosition: a tuple of coordinate (x,y)
         :param colorIndex: the index of the color being moved now in Grid.REPRESENTATION
-        :return: void
         """
         checkColor = self.grid.REPRESENTATION[colorIndex]
         otherColor = self.grid.REPRESENTATION[1-colorIndex]
@@ -363,7 +482,7 @@ class Game:
         """
         Check if it's the end of game.
         :param colorIndex: the index of the color being moved now in Grid.REPRESENTATION
-        :return: True or False
+        :return: True if the game ends, False else
         """
         checkColor = self.grid.REPRESENTATION[colorIndex]
         otherColor = self.grid.REPRESENTATION[1-colorIndex]
@@ -403,9 +522,15 @@ class GameState:
         self.bestValue = None
 
     def copy(self):
+        """
+        :return a deep copy of the game state
+        """
         return GameState(self.grid.deepCopy(), self.move, self.player, self.colorIndex, self.bestValue)
 
     def deepCopy(self):
+        """
+        :return a deep copy of the game state
+        """
         return self.copy()
 
     def evaluate(self):
@@ -448,20 +573,18 @@ class GameState:
 
     def getPieceCount(self, checkColorIndex):
         """
-        Calculate the numbers of pieces.
-        :param grid: the current game board
+        Calculate the numbers of pieces of a certain color
         :param checkColorIndex: the index of color of the player being checked
-        :return: the number of pieces
+        :return: the number of pieces of a certain color
         """
         return self.grid.countPlayerX() if self.grid.REPRESENTATION[checkColorIndex] == 'X' \
             else self.grid.countPlayerO()
 
     def getEgdePieceCount(self, checkColorIndex):
         """
-        Calculate the numbers of pieces on the edge.
-        :param grid: the current game board
+        Calculate the numbers of pieces on the edge of a certain color
         :param checkColorIndex: the index of color of the player being checked
-        :return: the number of pieces on the edge
+        :return: the number of pieces on the edge of a certain color
         """
         return self.grid.countPlayerXEdge() if self.grid.REPRESENTATION[checkColorIndex] == 'X' \
             else self.grid.countPlayerOEdge()
@@ -470,9 +593,8 @@ class GameState:
         """
         Calculate the number of potential moves of a player. Moves that lie on the same direction
         are not repeatedly counted.
-        :param grid: the current game board
         :param checkColorIndex: the index of color of the player being checked
-        :return: integer value of available moves for color
+        :return: integer value of available moves for a certain color
         """
         checkColor = self.grid.REPRESENTATION[checkColorIndex]
         otherColor = self.grid.REPRESENTATION[1-checkColorIndex]
@@ -506,9 +628,8 @@ class GameState:
         Calculate the number of potential moves of a player. Moves that lie on the same direction
         are not repeatedly counted. Instead, the longer the player can move in one direction, the 
         higher score that direction will receive.
-        :param grid: the current game board
         :param checkColorIndex: the index of color of the player being checked
-        :return: integer value of available moves for color
+        :return: integer value of available moves for a certain color
         """
         checkColor = self.grid.REPRESENTATION[checkColorIndex]
         otherColor = self.grid.REPRESENTATION[1-checkColorIndex]
@@ -548,6 +669,9 @@ class GameState:
         return result
 
     def getFirstMove(self):
+        """
+        :return the list of possible moves for the first move
+        """
         emptyColor = self.grid.REPRESENTATION[2]
         listOfSuccessors = []
         otherPlayer = 'user' if self.player == 'computer' else 'user'
@@ -561,6 +685,9 @@ class GameState:
         return listOfSuccessors
 
     def getSecondMove(self):
+        """
+        :return the list of possible moves for the second move
+        """
         checkColor = self.grid.REPRESENTATION[self.colorIndex]
         otherColor = self.grid.REPRESENTATION[1-self.colorIndex]
         emptyColor = self.grid.REPRESENTATION[2]
@@ -594,6 +721,9 @@ class GameState:
         return listOfSuccessors
 
     def getSuccessors(self):
+        """
+        :return the list of possible moves for any round of moves after the second round
+        """
         checkColor = self.grid.REPRESENTATION[self.colorIndex]
         otherColor = self.grid.REPRESENTATION[1-self.colorIndex]
         emptyColor = self.grid.REPRESENTATION[2]
@@ -665,14 +795,18 @@ class GameState:
         return listOfSuccessors
 
 def calculateWinRate():
+    """
+    Print the win rate of the user against the computer.
+    """
     times = 10
     winRate = 0.0
     for i in range(times):
         game = Game('user', 6, 6)
-        winRate += game.play(5, False, True)
+        winRate += game.play(5, False, True, False, False)
     winRate = winRate/times
     print "Winrate:", winRate
 
-game = Game('user', 6, 6)
-game.play(5, True, False)
-#calculateWinRate()
+#game = Game('user', 6, 6)
+#game.play(5, True, False, False, True)
+
+calculateWinRate()
