@@ -542,11 +542,11 @@ class GameState:
         # if player has no move, then player lost, -inf or inf depend on who the player is
         # if player has moves, use heuristics.
         
-        checkColorMoves = self.getAvailableMoves(self.colorIndex)
-        otherColorMoves = self.getAvailableMoves(1-self.colorIndex)
+        #checkColorMoves = self.getAvailableMoves(self.colorIndex)
+        #otherColorMoves = self.getAvailableMoves(1-self.colorIndex)
         
-        #checkColorMoves = self.getAvailableMovesPreferLonger(self.colorIndex)
-        #otherColorMoves = self.getAvailableMovesPreferLonger(1-self.colorIndex)
+        checkColorMoves = self.getAvailableMovesPreferLonger(self.colorIndex)
+        otherColorMoves = self.getAvailableMovesPreferLonger(1-self.colorIndex)
 
         checkColorPieces = self.getPieceCount(self.colorIndex)
         otherColorPieces = self.getPieceCount(1-self.colorIndex)
@@ -674,7 +674,7 @@ class GameState:
         """
         emptyColor = self.grid.REPRESENTATION[2]
         listOfSuccessors = []
-        otherPlayer = 'user' if self.player == 'computer' else 'user'
+        otherPlayer = 'user' if self.player == 'computer' else 'computer'
 
         for (x, y) in [(1, 1), (self.grid.width/2, self.grid.height/2), \
                 (self.grid.width/2+1, self.grid.height/2+1), (self.grid.width, self.grid.height)]:
@@ -694,7 +694,7 @@ class GameState:
 
         listOfSuccessors = []
         listOfMoves = []
-        otherPlayer = 'user' if self.player == 'computer' else 'user'
+        otherPlayer = 'user' if self.player == 'computer' else 'computer'
 
         for x in range(1, self.grid.width+1):
             for y in range(1, self.grid.height+1):
@@ -729,7 +729,7 @@ class GameState:
         emptyColor = self.grid.REPRESENTATION[2]
 
         listOfSuccessors = []
-        otherPlayer = 'user' if self.player == 'computer' else 'user'
+        otherPlayer = 'user' if self.player == 'computer' else 'computer'
 
         for x in range(1, self.grid.width+1):
             for y in range(1, self.grid.height+1):
@@ -806,7 +806,7 @@ def calculateWinRate():
     winRate = winRate/times
     print "Winrate:", winRate
 
-#game = Game('user', 6, 6)
-#game.play(5, True, False, False, True)
+game = Game('user', 6, 6)
+game.play(5, True, False, False, True)
 
-calculateWinRate()
+#calculateWinRate()

@@ -2,4 +2,4 @@ A report describing your implementation of the game playing algorithm(s) noting 
 
 We add a MinimaxInfo class to record the meta information used in the Minimax  algorithm, i.e. the branching factors, the number of cutoffs, and the total time of static evaluations done. We ask for the index of the round of moves as an input to determine if we are trying to make the first or second moves. If so, the list of successors will be generated according to the rules of Konane. When returning moves, the move that generates one of the successor will be returned. If all the successors lead to the loss of the computer, the minimax will randomly choose one of the successors and return it.
 
-Our static evaluation function calculate the difference between the available moves of the computer and the user and try to maximize the difference. 
+Our static evaluation function calculate the difference between the available moves of the computer and the user and try to maximize the difference. For the available moves, multiple jumps will be scored higher, because it could be used as multiple single-jump moves.
